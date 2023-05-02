@@ -48,6 +48,7 @@ class SignalProcessing {
                     // Render the FFT as a line in the output image
                     for (j in 0 until height) {
                         val magnitude = transformed[j].abs()
+                        Log.i("M","mag:,$magnitude")
                         val color = (255 * magnitude / fftSize).toInt()
                         image.setPixel((i / (fftSize / 2)).toInt(), height - j - 1, Color.rgb(color, 0, color))
                     }
