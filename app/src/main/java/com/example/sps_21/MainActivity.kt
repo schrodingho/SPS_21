@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
     private var recorder: AudioRecord? = null
 
     // generate 20kHz tone
-    private val genFreq = 20000
+    private val genFreq = 5000
     private val PLAYER_CHANNEL = AudioFormat.CHANNEL_OUT_MONO;
     private var TRACK_BUFFER_SIZE = 0
     private val PLAY_DURATION = 3
@@ -188,6 +188,12 @@ fun MainActivity.ScaffoldDemo() {
                 stopRecording()
             }) {
                 Text(text = "Stop recording")
+            }
+            Button(onClick = {
+                scope.launch { scaffoldState.snackbarHostState.showSnackbar("Show spectrum", duration = SnackbarDuration.Short) }
+
+            }) {
+                Text(text = "spectrum showed")
             }
         }
     }
