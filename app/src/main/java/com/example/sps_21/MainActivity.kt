@@ -159,6 +159,14 @@ class MainActivity : ComponentActivity() {
         playingThread?.start()
     }
 
+    fun generateSpectrum(){
+        var spectrum = File(cacheDir.absolutePath,"spectrum.png")
+        var pcm = File(cacheDir.absolutePath,"recording12.pcm")
+        //var filepath = pcm.absolutePath;
+        //println("file path:,$filepath")
+        SignalProcessing.pcmToSpectrum(pcm,spectrum)
+    }
+
 }
 
 
@@ -190,10 +198,10 @@ fun MainActivity.ScaffoldDemo() {
                 Text(text = "Stop recording")
             }
             Button(onClick = {
-                scope.launch { scaffoldState.snackbarHostState.showSnackbar("Show spectrum", duration = SnackbarDuration.Short) }
-
+                scope.launch { scaffoldState.snackbarHostState.showSnackbar("spectrum", duration = SnackbarDuration.Short) }
+                generateSpectrum()
             }) {
-                Text(text = "spectrum showed")
+                Text(text = "Show spectrum")
             }
         }
     }
