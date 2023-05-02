@@ -31,6 +31,7 @@ class SignalProcessing {
             );
             for (i in 0 until numFrames - fftSize step (fftSize / 2).toLong()) {
                 // Read in the input data
+                Log.i("i","$i")
                 val inputStream = pcmFile.inputStream()
                 inputStream.skip(i.toLong() * 2) // Assumes 16-bit PCM data
                 inputStream.read(buffer, 0, buffer.size)
@@ -48,7 +49,7 @@ class SignalProcessing {
                     // Render the FFT as a line in the output image
                     for (j in 0 until height) {
                         val magnitude = transformed[j].abs()
-                        Log.i("M","mag:,$magnitude")
+//                        Log.i("M","mag:,$i $j $magnitude")
                         val color = (255 * magnitude / fftSize).toInt()
                         image.setPixel((i / (fftSize / 2)).toInt(), height - j - 1, Color.rgb(color, 0, color))
                     }
