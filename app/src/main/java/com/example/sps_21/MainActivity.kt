@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
     private var recorder: AudioRecord? = null
 
     // generate 20kHz tone
-    private val genFreq = 5000
+    private val genFreq = 12000
     private val PLAYER_CHANNEL = AudioFormat.CHANNEL_OUT_MONO;
     private var TRACK_BUFFER_SIZE = 0
     private val PLAY_DURATION = 3
@@ -186,8 +186,8 @@ fun MainActivity.ScaffoldDemo() {
                     scaffoldState.snackbarHostState.showSnackbar("Recording & Playing", duration = SnackbarDuration.Short)
                     delay(5000)
                 }
-                playChirp()
                 createRecorder()
+                playChirp()
             }) {
                 Text(text = "Start Program")
             }

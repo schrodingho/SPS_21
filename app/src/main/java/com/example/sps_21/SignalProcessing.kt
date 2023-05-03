@@ -1,69 +1,85 @@
 package com.example.sps_21
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.text.style.LineBackgroundSpan.Standard
 import android.util.Log
+import androidx.core.graphics.set
 import org.apache.commons.math3.transform.DftNormalization
 import java.io.File
+import java.io.FileOutputStream
 import java.lang.Exception
+import java.util.Collections.min
+import kotlin.experimental.and
+import kotlin.experimental.or
+import kotlin.math.min
 
 class SignalProcessing {
     companion object {
-        fun pcmToSpectrum(pcmFile: File, spectrumFile: File, sampleRate: Int = 44100, fftSize: Int = 2048) {
-            // Compute the number of frames in the input data
+        fun pcmToSpectrum(pcmFile: File, spectrumFile: File, sampleRate: Int = 44100, fftSize: Int = 8192) {
             val numFrames = pcmFile.length() / 2
+            val input = pcmFile.readBytes()
 
-            // Set up the AudioRecord object to read in the PCM data
-            val bufferSize = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
-            val buffer = ByteArray(bufferSize / 2)
-
-            // Set up the output image
-            val height = fftSize / 2 // We only need to show the positive frequencies
-            val image = Bitmap.createBitmap(numFrames.toInt(), height, Bitmap.Config.ARGB_8888)
+            var frequencies = DoubleArray(fftSize/2)
 
             // Loop through the input data, computing the FFT of each segment and rendering it as a line in the output image
             val transformer = org.apache.commons.math3.transform.FastFourierTransformer(
                 DftNormalization.STANDARD
             );
-            for (i in 0 until numFrames - fftSize step (fftSize / 2).toLong()) {
-                // Read in the input data
-                Log.i("i","$i")
-                val inputStream = pcmFile.inputStream()
-                inputStream.skip(i.toLong() * 2) // Assumes 16-bit PCM data
-                inputStream.read(buffer, 0, buffer.size)
-                inputStream.close()
-
-                // Compute the FFT of the input data
-                val input = buffer.map { it.toDouble() }.toDoubleArray()
-                val inputLength = input.size
-                val paddedLength = Integer.highestOneBit(inputLength - 1) shl 1
-                val paddled = DoubleArray(paddedLength) { i ->
-                    if (i < inputLength) input[i] else 0.0
+            val inputLength = numFrames.toInt()
+            val paddedLength = Integer.highestOneBit(inputLength - 1) shl 1
+            val paddled = ShortArray(paddedLength)
+            val transform_lenth = min(paddedLength,fftSize/2)
+            val test_input = DoubleArray(transform_lenth)
+            for ( i in 0 until transform_lenth){
+                test_input[i] = Math.sin(2.0 * Math.PI * i.toDouble() / (sampleRate / 12000))+Math.sin(2.0 * Math.PI * i.toDouble() / (sampleRate / 8000)) //500hz sinwave
+            }
+            for (i in 0 until transform_lenth) {
+                if (i*2<input.size) {
+                    paddled[i] =
+                        (input[i * 2].toShort() and 0X00FF) or ((input[i * 2 + 1].toInt() shl 8).toShort())
                 }
-                try{
-                    val transformed = transformer.transform(paddled.map { org.apache.commons.math3.complex.Complex(it, 0.0) }.toTypedArray(), org.apache.commons.math3.transform.TransformType.FORWARD)
-                    // Render the FFT as a line in the output image
-                    for (j in 0 until height) {
-                        val magnitude = transformed[j].abs()
-//                        Log.i("M","mag:,$i $j $magnitude")
-                        val color = (255 * magnitude / fftSize).toInt()
-                        image.setPixel((i / (fftSize / 2)).toInt(), height - j - 1, Color.rgb(color, 0, color))
-                    }
-                }catch (e: Exception) {
-                    Log.e("TAG", "Error message: ${e.message}")
-                    e.printStackTrace()
+                else{
+                    paddled[i] = 0 //pad with 0
                 }
-
+            }
+            try{
+//                val transformed = transformer.transform(paddled.map { org .apache.commons.math3.complex.Complex(it.toDouble(),0.0)}.toTypedArray(),org.apache.commons.math3.transform.TransformType.FORWARD)
+                val transformed = transformer.transform(test_input.map { org .apache.commons.math3.complex.Complex(it.toDouble(),0.0)}.toTypedArray(),org.apache.commons.math3.transform.TransformType.FORWARD)
+                for (i in 0 until transform_lenth) {
+                    frequencies[i] = transformed[i].abs()
+                }
+            }catch (e: Exception) {
+                Log.e("TAG", "Error message: ${e.message}")
+                e.printStackTrace()
             }
 
-//            Save the output image to disk
-            spectrumFile.outputStream().use { outputStream ->
-                image.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+
+            //////////////////////////////////////////////////////////
+            val chartWidth = 1000 // Width of the chart in pixels
+            val chartHeight = 500 // Height of the chart in pixels
+            val chartMargin = 50
+            val chartBitmap = Bitmap.createBitmap(chartWidth, chartHeight, Bitmap.Config.ARGB_8888)
+            val chartCanvas = Canvas(chartBitmap)
+            chartCanvas.drawColor(Color.WHITE)
+            val barPaint = Paint()
+            barPaint.color = Color.BLUE
+            barPaint.style = Paint.Style.FILL
+            val barWidth = (chartWidth - 2 * chartMargin) / 2048f
+            val barSpacing = barWidth / 2f
+            val maxAmplitude = frequencies.max()+0.000001
+            for (i in 0 until transform_lenth) {
+                val x = chartMargin + i * (barWidth + barSpacing)
+                val barHeight = chartHeight * frequencies[i].toFloat() / maxAmplitude.toFloat()
+                val y = chartHeight - chartMargin - barHeight
+                chartCanvas.drawRect(x, y, x + barWidth, chartHeight - chartMargin.toFloat(), barPaint)
+            }
+            chartBitmap.compress(Bitmap.CompressFormat.PNG, 100, FileOutputStream(spectrumFile))
             }
         }
     }
-}
