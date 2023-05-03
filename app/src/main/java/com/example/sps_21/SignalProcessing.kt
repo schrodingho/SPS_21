@@ -61,14 +61,14 @@ class SignalProcessing {
 
 
             //////////////////////////////////////////////////////////
-            val chartWidth = 1000 // Width of the chart in pixels
-            val chartHeight = 500 // Height of the chart in pixels
-            val chartMargin = 50
+            val chartWidth = 1500 // Width of the chart in pixels
+            val chartHeight = 1000 // Height of the chart in pixels
+            val chartMargin = 10
             val chartBitmap = Bitmap.createBitmap(chartWidth, chartHeight, Bitmap.Config.ARGB_8888)
             val chartCanvas = Canvas(chartBitmap)
             chartCanvas.drawColor(Color.WHITE)
             val barPaint = Paint()
-            barPaint.color = Color.BLUE
+            barPaint.color = Color.BLACK
             barPaint.style = Paint.Style.FILL
             val barWidth = (chartWidth - 2 * chartMargin) / 2048f
             val barSpacing = barWidth / 2f
