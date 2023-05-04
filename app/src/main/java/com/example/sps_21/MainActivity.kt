@@ -35,7 +35,7 @@ import com.example.sps_21.ui.theme.SPS_21Theme
 
 
 class MainActivity : ComponentActivity() {
-    private val SAMPLE_RATE = 83333
+    private val SAMPLE_RATE = 63333
     private val CHANNEL = AudioFormat.CHANNEL_IN_MONO;
     private val ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private val BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL, ENCODING)

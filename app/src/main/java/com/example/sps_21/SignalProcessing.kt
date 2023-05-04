@@ -21,7 +21,7 @@ import kotlin.math.min
 
 class SignalProcessing {
     companion object {
-        fun pcmToSpectrum(pcmFile: File, spectrumFile: File, sampleRate: Int = 83333, fftSize: Int = 16384) {
+        fun pcmToSpectrum(pcmFile: File, spectrumFile: File, sampleRate: Int = 63333, fftSize: Int = 16384*2) {
             val numFrames = pcmFile.length() / 2
             val input = pcmFile.readBytes()
 
@@ -50,8 +50,8 @@ class SignalProcessing {
                 }
             }
             try{
-//                val transformed = transformer.transform(paddled.map { org .apache.commons.math3.complex.Complex(it.toDouble(),0.0)}.toTypedArray(),org.apache.commons.math3.transform.TransformType.FORWARD)
-                val transformed = transformer.transform(test_input.map { org .apache.commons.math3.complex.Complex(it.toDouble(),0.0)}.toTypedArray(),org.apache.commons.math3.transform.TransformType.FORWARD)
+                val transformed = transformer.transform(paddled.map { org .apache.commons.math3.complex.Complex(it.toDouble(),0.0)}.toTypedArray(),org.apache.commons.math3.transform.TransformType.FORWARD)
+               // val transformed = transformer.transform(test_input.map { org .apache.commons.math3.complex.Complex(it.toDouble(),0.0)}.toTypedArray(),org.apache.commons.math3.transform.TransformType.FORWARD)
                 for (i in 0 until transform_lenth/2) {
                     frequencies[i] = transformed[i].abs()
                 }
