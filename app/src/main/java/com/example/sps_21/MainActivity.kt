@@ -45,10 +45,10 @@ class MainActivity : ComponentActivity() {
     private var recorder: AudioRecord? = null
 
     // generate 20kHz tone
-    private val genFreq = 20000
+    private val genFreq = 12000
     private val PLAYER_CHANNEL = AudioFormat.CHANNEL_OUT_MONO;
     private var TRACK_BUFFER_SIZE = 0
-    private val PLAY_DURATION = 3
+    private val PLAY_DURATION = 1
     private val numSamples = SAMPLE_RATE * PLAY_DURATION
     private var samples = DoubleArray(numSamples)
     private var gSnd = ByteArray(2 * numSamples)
@@ -90,10 +90,12 @@ class MainActivity : ComponentActivity() {
         isRecording = true
 
         outputStream = FileOutputStream(cacheDir.absolutePath + "/recording12.pcm")
-
+        var time = 10;
         recordingThread = Thread( Runnable {
             val buffer = ShortArray(BUFFER_SIZE)
             while (isRecording) {
+                time -= 1
+                if(time==0){stopRecording()}
                 val read = recorder?.read(buffer, 0, BUFFER_SIZE) ?: 0
                 outputStream?.write(toByteArray(buffer), 0 , read * 2)
             }
@@ -186,16 +188,10 @@ fun MainActivity.ScaffoldDemo() {
                     scaffoldState.snackbarHostState.showSnackbar("Recording & Playing", duration = SnackbarDuration.Short)
                     delay(5000)
                 }
-                createRecorder()
                 playChirp()
+                createRecorder()
             }) {
                 Text(text = "Start Program")
-            }
-            Button(onClick = {
-                scope.launch { scaffoldState.snackbarHostState.showSnackbar("Recording stopped", duration = SnackbarDuration.Short) }
-                stopRecording()
-            }) {
-                Text(text = "Stop recording")
             }
             Button(onClick = {
                 scope.launch { scaffoldState.snackbarHostState.showSnackbar("spectrum", duration = SnackbarDuration.Short) }

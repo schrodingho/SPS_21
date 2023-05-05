@@ -21,7 +21,7 @@ import kotlin.math.min
 
 class SignalProcessing {
     companion object {
-        fun pcmToSpectrum(pcmFile: File, spectrumFile: File, sampleRate: Int = 63333, fftSize: Int = 16384*2) {
+        fun pcmToSpectrum(pcmFile: File, spectrumFile: File, sampleRate: Int = 63333, fftSize: Int = 16932) {
             val numFrames = pcmFile.length() / 2
             val input = pcmFile.readBytes()
 
@@ -73,7 +73,7 @@ class SignalProcessing {
             barPaint.style = Paint.Style.FILL
             val barWidth = (chartWidth - 2 * chartMargin) / (transform_lenth.toFloat()/2)
             val barSpacing = 0
-            val maxAmplitude = frequencies.max()
+            val maxAmplitude = 500000
            // val index = frequencies.indexOfFirst { it==maxAmplitude }
             for (i in frequencies.indices) {
                 val x = chartMargin + i * (barWidth + barSpacing)
