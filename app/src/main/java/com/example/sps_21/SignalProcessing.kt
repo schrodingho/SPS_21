@@ -21,11 +21,16 @@ import kotlin.math.min
 
 class SignalProcessing {
     companion object {
-        fun pcmToSpectrum(pcmFile: File, spectrumFile: File, sampleRate: Int = 44100, fftSize: Int = 8192) {
+        fun pcmToSpectrum(
+            pcmFile: File,
+            spectrumFile: File,
+            sampleRate: Int = 44100,
+            fftSize: Int = 8192
+        ) {
             val numFrames = pcmFile.length() / 2
             val input = pcmFile.readBytes()
 
-            var frequencies = DoubleArray(fftSize/2)
+            var frequencies = DoubleArray(fftSize / 2)
 
             // Loop through the input data, computing the FFT of each segment and rendering it as a line in the output image
             val transformer = org.apache.commons.math3.transform.FastFourierTransformer(
@@ -34,27 +39,32 @@ class SignalProcessing {
             val inputLength = numFrames.toInt()
             val paddedLength = Integer.highestOneBit(inputLength - 1) shl 1
             val paddled = ShortArray(paddedLength)
-            val transform_lenth = min(paddedLength,fftSize/2)
+            val transform_lenth = min(paddedLength, fftSize / 2)
             val test_input = DoubleArray(transform_lenth)
-            for ( i in 0 until transform_lenth){
-                test_input[i] = Math.sin(2.0 * Math.PI * i.toDouble() / (sampleRate / 12000))+Math.sin(2.0 * Math.PI * i.toDouble() / (sampleRate / 8000)) //500hz sinwave
+            for (i in 0 until transform_lenth) {
+                test_input[i] =
+                    Math.sin(2.0 * Math.PI * i.toDouble() / (sampleRate / 12000)) + Math.sin(2.0 * Math.PI * i.toDouble() / (sampleRate / 8000)) //500hz sinwave
             }
             for (i in 0 until transform_lenth) {
-                if (i*2<input.size) {
+                if (i * 2 < input.size) {
                     paddled[i] =
                         (input[i * 2].toShort() and 0X00FF) or ((input[i * 2 + 1].toInt() shl 8).toShort())
-                }
-                else{
+                } else {
                     paddled[i] = 0 //pad with 0
                 }
             }
-            try{
+            try {
 //                val transformed = transformer.transform(paddled.map { org .apache.commons.math3.complex.Complex(it.toDouble(),0.0)}.toTypedArray(),org.apache.commons.math3.transform.TransformType.FORWARD)
-                val transformed = transformer.transform(test_input.map { org .apache.commons.math3.complex.Complex(it.toDouble(),0.0)}.toTypedArray(),org.apache.commons.math3.transform.TransformType.FORWARD)
+                val transformed = transformer.transform(test_input.map {
+                    org.apache.commons.math3.complex.Complex(
+                        it.toDouble(),
+                        0.0
+                    )
+                }.toTypedArray(), org.apache.commons.math3.transform.TransformType.FORWARD)
                 for (i in 0 until transform_lenth) {
                     frequencies[i] = transformed[i].abs()
                 }
-            }catch (e: Exception) {
+            } catch (e: Exception) {
                 Log.e("TAG", "Error message: ${e.message}")
                 e.printStackTrace()
             }
@@ -72,14 +82,20 @@ class SignalProcessing {
             barPaint.style = Paint.Style.FILL
             val barWidth = (chartWidth - 2 * chartMargin) / 2048f
             val barSpacing = barWidth / 2f
-            val maxAmplitude = frequencies.max()+0.000001
+            val maxAmplitude = frequencies.max() + 0.000001
             for (i in 0 until transform_lenth) {
                 val x = chartMargin + i * (barWidth + barSpacing)
                 val barHeight = chartHeight * frequencies[i].toFloat() / maxAmplitude.toFloat()
                 val y = chartHeight - chartMargin - barHeight
-                chartCanvas.drawRect(x, y, x + barWidth, chartHeight - chartMargin.toFloat(), barPaint)
+                chartCanvas.drawRect(
+                    x,
+                    y,
+                    x + barWidth,
+                    chartHeight - chartMargin.toFloat(),
+                    barPaint
+                )
             }
             chartBitmap.compress(Bitmap.CompressFormat.PNG, 100, FileOutputStream(spectrumFile))
-            }
         }
     }
+}
