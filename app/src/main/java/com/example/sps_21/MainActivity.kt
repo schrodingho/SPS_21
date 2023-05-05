@@ -8,7 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 import android.Manifest
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.widget.Space
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.BottomAppBar
@@ -27,10 +32,18 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.rememberScaffoldState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberImagePainter
 import com.example.sps_21.ui.theme.Primary200
 import com.example.sps_21.ui.theme.Primary700
 import com.example.sps_21.ui.theme.SPS_21Theme
+
 
 class MainActivity : ComponentActivity() {
     val recorder by lazy {
@@ -51,7 +64,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             SPS_21Theme {
-                ScaffoldDemo()
+                MainScreen()
             }
         }
     }
@@ -68,9 +81,16 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun MainActivity.ScaffoldDemo() {
+fun MainActivity.MainScreen() {
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
+    val imageBitmap = remember { mutableStateOf<Bitmap?>(null) }
+
+
+    fun loadImage() {
+        val bitmap = BitmapFactory.decodeFile(File(cacheDir, "spectrum.png").absolutePath)
+        imageBitmap.value = bitmap
+    }
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -78,7 +98,6 @@ fun MainActivity.ScaffoldDemo() {
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(paddingValues = innerPadding)
                 .wrapContentSize(
                     Alignment.Center
@@ -118,9 +137,37 @@ fun MainActivity.ScaffoldDemo() {
                     )
                 }
                 generateSpectrum()
+                loadImage()
             }) {
-                Text(text = "Show spectrum")
+                Text(text = "Generate spectrum")
             }
+            Button(onClick = {
+                scope.launch {
+                    scaffoldState.snackbarHostState.showSnackbar(
+                        "Image deleted",
+                        duration = SnackbarDuration.Short
+                    )
+                }
+                var spectrum = File(cacheDir.absolutePath, "spectrum.png")
+                spectrum.delete()
+                imageBitmap.value = null
+                },
+                enabled = imageBitmap.value != null
+            ) {
+                Text(text = "Delete Image")
+            }
+            Spacer(modifier = Modifier.padding(10.dp))
+
+            imageBitmap.value?.let {
+                Image(
+                    painter = rememberImagePainter(it),
+                    contentDescription = "Spectrum",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(10.dp)
+                )
+            }
+
         }
     }
 }
