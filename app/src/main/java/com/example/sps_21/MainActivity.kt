@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.BottomAppBar
+import androidx.compose.material.BottomSheetValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.core.app.ActivityCompat
@@ -28,20 +29,29 @@ import androidx.compose.material.Text
 import androidx.compose.material.Button
 import androidx.compose.material.FabPosition
 import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.TopAppBar
+import androidx.compose.material.rememberBottomSheetScaffoldState
+import androidx.compose.material.rememberBottomSheetState
 import androidx.compose.material.rememberScaffoldState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberImagePainter
 import com.example.sps_21.ui.theme.Primary200
 import com.example.sps_21.ui.theme.Primary700
+import com.example.sps_21.ui.theme.Red600
 import com.example.sps_21.ui.theme.SPS_21Theme
 
 
@@ -79,13 +89,11 @@ class MainActivity : ComponentActivity() {
 
 }
 
-
 @Composable
 fun MainActivity.MainScreen() {
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     val imageBitmap = remember { mutableStateOf<Bitmap?>(null) }
-
 
     fun loadImage() {
         val bitmap = BitmapFactory.decodeFile(File(cacheDir, "spectrum.png").absolutePath)
@@ -94,7 +102,12 @@ fun MainActivity.MainScreen() {
 
     Scaffold(
         scaffoldState = scaffoldState,
-        topBar = { TopAppBar(title = {Text("TopAppBar")},backgroundColor = Primary200)  },
+        topBar = { TopAppBar(title =
+            {
+                Text("AudioLoc", fontSize = 25.sp, fontStyle = FontStyle.Italic)
+            }, backgroundColor = Red600
+        )
+     },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -169,5 +182,21 @@ fun MainActivity.MainScreen() {
             }
 
         }
+    }
+}
+
+
+@Composable
+fun ProfileScreenView() {
+    Column {
+        Text(text = "Profile Screen")
+    }
+}
+
+@Composable
+fun AboutScreenView() {
+    Column {
+        Text(text = "Group 21")
+        Text(text = "Members: Dinghao Xue & Junyu Lu")
     }
 }
