@@ -8,53 +8,60 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 import android.Manifest
-import android.content.pm.PackageManager
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
-import android.media.AudioTrack
-import android.media.AudioManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.widget.Space
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.BottomAppBar
+import androidx.compose.material.BottomSheetValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileOutputStream
-import kotlin.experimental.and
 
 import androidx.compose.material.Text
 import androidx.compose.material.Button
+import androidx.compose.material.FabPosition
+import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarDuration
+import androidx.compose.material.TopAppBar
+import androidx.compose.material.rememberBottomSheetScaffoldState
+import androidx.compose.material.rememberBottomSheetState
 import androidx.compose.material.rememberScaffoldState
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberImagePainter
+import com.example.sps_21.ui.theme.Primary200
+import com.example.sps_21.ui.theme.Primary700
+import com.example.sps_21.ui.theme.Red600
 import com.example.sps_21.ui.theme.SPS_21Theme
 
 
 class MainActivity : ComponentActivity() {
-    private val SAMPLE_RATE = 44100
-    private val CHANNEL = AudioFormat.CHANNEL_IN_MONO;
-    private val ENCODING = AudioFormat.ENCODING_PCM_16BIT;
-    private val BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL, ENCODING)
-    private var outputStream: FileOutputStream? = null
-    private var recordingThread: Thread? = null
-    private var isRecording = false
-    private var recorder: AudioRecord? = null
-
-    // generate 20kHz tone
-    private val genFreq = 20000
-    private val PLAYER_CHANNEL = AudioFormat.CHANNEL_OUT_MONO;
-    private var TRACK_BUFFER_SIZE = 0
-    private val PLAY_DURATION = 3
-    private val numSamples = SAMPLE_RATE * PLAY_DURATION
-    private var samples = DoubleArray(numSamples)
-    private var gSnd = ByteArray(2 * numSamples)
-    private var playingThread: Thread? = null
-
-    private var player: AudioTrack? = null
+    val recorder by lazy {
+        Recorder(applicationContext)
+    }
+    val player by lazy {
+        Player(applicationContext)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,131 +71,125 @@ class MainActivity : ComponentActivity() {
             arrayOf(Manifest.permission.RECORD_AUDIO),
             0
         )
+
         setContent {
             SPS_21Theme {
-                    ScaffoldDemo()
-                }
+                MainScreen()
             }
         }
-    fun createRecorder() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.RECORD_AUDIO
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return
-        }
-        recorder = AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL, ENCODING, BUFFER_SIZE)
-        recorder?.startRecording()
-        isRecording = true
-
-        outputStream = FileOutputStream(cacheDir.absolutePath + "/recording12.pcm")
-
-        recordingThread = Thread( Runnable {
-            val buffer = ShortArray(BUFFER_SIZE)
-            while (isRecording) {
-                val read = recorder?.read(buffer, 0, BUFFER_SIZE) ?: 0
-                outputStream?.write(toByteArray(buffer), 0 , read * 2)
-            }
-        })
-        recordingThread?.start()
     }
 
-    fun stopRecording() {
-        isRecording = false
-        recorder?.stop()
-        recorder?.release()
-        recorder = null
-        recordingThread = null
-        outputStream?.close()
-    }
-    private fun toByteArray(shortArray: ShortArray): ByteArray {
-        val byteArray = ByteArray(shortArray.size * 2)
-        for (i in shortArray.indices) {
-            byteArray[i * 2] = (shortArray[i] and 0xff).toByte()
-            byteArray[i * 2 + 1] = (shortArray[i].toInt() shr 8).toByte()
-        }
-        return byteArray
-    }
-
-    private fun createPlayer() {
-        try {
-            TRACK_BUFFER_SIZE = AudioTrack.getMinBufferSize(numSamples, PLAYER_CHANNEL, ENCODING)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        player = AudioTrack(
-            AudioManager.STREAM_MUSIC,
-            SAMPLE_RATE,
-            PLAYER_CHANNEL,
-            ENCODING,
-            TRACK_BUFFER_SIZE,
-            AudioTrack.MODE_STREAM
-        )
-        player?.write(gSnd, 0, gSnd.size)
-        player?.play()
-    }
-
-    private fun generateChirp() {
-        for (i in 0 until numSamples) {
-            samples[i] = Math.sin(2.0 * Math.PI * i.toDouble() / (SAMPLE_RATE / genFreq))
-        }
-
-        var idx = 0
-        for (dVal in samples) {
-            val shortVal = (dVal * 32767).toInt().toShort()
-            gSnd[idx++] = (shortVal and 0x00ff).toByte()
-            gSnd[idx++] = (shortVal and 0xff00.toShort()).toInt().ushr(8).toByte()
-        }
-    }
-
-    fun playChirp() {
-        playingThread = Thread(
-            Runnable {
-                generateChirp()
-                createPlayer()
-            }
-        )
-        playingThread?.start()
+    fun generateSpectrum() {
+        var spectrum = File(cacheDir.absolutePath, "spectrum.png")
+        var pcm = File(cacheDir.absolutePath, "recording12.pcm")
+        //var filepath = pcm.absolutePath;
+        //println("file path:,$filepath")
+        SignalProcessing.pcmToSpectrum(pcm, spectrum)
     }
 
 }
 
-
 @Composable
-fun MainActivity.ScaffoldDemo() {
+fun MainActivity.MainScreen() {
     val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
+    val imageBitmap = remember { mutableStateOf<Bitmap?>(null) }
+
+    fun loadImage() {
+        val bitmap = BitmapFactory.decodeFile(File(cacheDir, "spectrum.png").absolutePath)
+        imageBitmap.value = bitmap
+    }
 
     Scaffold(
         scaffoldState = scaffoldState,
-    ) {
-            innerPadding ->
-        Column(modifier = Modifier.fillMaxSize().padding(paddingValues = innerPadding).wrapContentSize(
-            Alignment.Center)) {
+        topBar = {
+            TopAppBar(
+                title =
+                {
+                    Text("AudioLoc", fontSize = 25.sp, fontStyle = FontStyle.Italic)
+                }, backgroundColor = Red600
+            )
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(paddingValues = innerPadding)
+                .wrapContentSize(
+                    Alignment.Center
+                )
+        ) {
             Button(onClick = {
                 scope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar("Recording & Playing", duration = SnackbarDuration.Short)
-                    delay(5000)
+                    scaffoldState.snackbarHostState.showSnackbar(
+                        "Recording & Playing",
+                        duration = SnackbarDuration.Short
+                    )
                 }
-                playChirp()
-                createRecorder()
+                player.playChirp()
+                recorder.createRecorder()
+                File(cacheDir, "recording12.pcm").also {
+                    recorder.startRecord(it)
+                }
+
             }) {
                 Text(text = "Start Program")
             }
             Button(onClick = {
-                scope.launch { scaffoldState.snackbarHostState.showSnackbar("Recording stopped", duration = SnackbarDuration.Short) }
-                stopRecording()
+                scope.launch {
+                    scaffoldState.snackbarHostState.showSnackbar(
+                        "spectrum",
+                        duration = SnackbarDuration.Short
+                    )
+                }
+                generateSpectrum()
+                loadImage()
             }) {
-                Text(text = "Stop recording")
+                Text(text = "Generate spectrum")
             }
+            Button(
+                onClick = {
+                    scope.launch {
+                        scaffoldState.snackbarHostState.showSnackbar(
+                            "Image deleted",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                    var spectrum = File(cacheDir.absolutePath, "spectrum.png")
+                    spectrum.delete()
+                    imageBitmap.value = null
+                },
+                enabled = imageBitmap.value != null
+            ) {
+                Text(text = "Delete Image")
+            }
+            Spacer(modifier = Modifier.padding(10.dp))
+
+            imageBitmap.value?.let {
+                Image(
+                    painter = rememberImagePainter(it),
+                    contentDescription = "Spectrum",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(10.dp)
+                )
+            }
+
         }
+    }
+}
+
+
+@Composable
+fun ProfileScreenView() {
+    Column {
+        Text(text = "Profile Screen")
+    }
+}
+
+@Composable
+fun AboutScreenView() {
+    Column {
+        Text(text = "Group 21")
+        Text(text = "Members: Dinghao Xue & Junyu Lu")
     }
 }
