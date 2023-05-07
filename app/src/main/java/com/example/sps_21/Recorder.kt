@@ -12,7 +12,7 @@ import java.io.FileOutputStream
 import kotlin.experimental.and
 
 class Recorder(applicationContext: Context) {
-    private val SAMPLE_RATE = 44100
+    private val SAMPLE_RATE = 63333
     private val CHANNEL = AudioFormat.CHANNEL_IN_MONO;
     private val ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private val BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL, ENCODING)
@@ -47,9 +47,14 @@ class Recorder(applicationContext: Context) {
 
         outputStream = FileOutputStream(saveFile)
 
+        var recordDuration = 10;
         recordingThread = Thread(Runnable {
             val buffer = ShortArray(BUFFER_SIZE)
             while (isRecording) {
+                recordDuration -= 1
+                if (recordDuration == 0) {
+                    stopRecord()
+                }
                 val read = recorder?.read(buffer, 0, BUFFER_SIZE) ?: 0
                 outputStream?.write(toByteArray(buffer), 0, read * 2)
             }

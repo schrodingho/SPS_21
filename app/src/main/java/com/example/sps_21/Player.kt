@@ -4,17 +4,19 @@ import android.content.Context
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
-import kotlinx.coroutines.delay
 import kotlin.experimental.and
 
+
+// generate 20kHz tone
+
 class Player(applicationContext: Context) {
-    private val SAMPLE_RATE = 44100
+    private val SAMPLE_RATE = 63333
     private val ENCODING = AudioFormat.ENCODING_PCM_16BIT
 
     private val genFreq = 12000
     private val PLAYER_CHANNEL = AudioFormat.CHANNEL_OUT_MONO
     private var TRACK_BUFFER_SIZE = 0
-    private val PLAY_DURATION = 3
+    private val PLAY_DURATION = 1
     private val numSamples = SAMPLE_RATE * PLAY_DURATION
     private var samples = DoubleArray(numSamples)
     private var gSnd = ByteArray(2 * numSamples)

@@ -102,12 +102,14 @@ fun MainActivity.MainScreen() {
 
     Scaffold(
         scaffoldState = scaffoldState,
-        topBar = { TopAppBar(title =
-            {
-                Text("AudioLoc", fontSize = 25.sp, fontStyle = FontStyle.Italic)
-            }, backgroundColor = Red600
-        )
-     },
+        topBar = {
+            TopAppBar(
+                title =
+                {
+                    Text("AudioLoc", fontSize = 25.sp, fontStyle = FontStyle.Italic)
+                }, backgroundColor = Red600
+            )
+        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -123,24 +125,14 @@ fun MainActivity.MainScreen() {
                         duration = SnackbarDuration.Short
                     )
                 }
+                player.playChirp()
                 recorder.createRecorder()
                 File(cacheDir, "recording12.pcm").also {
                     recorder.startRecord(it)
                 }
-                player.playChirp()
+
             }) {
                 Text(text = "Start Program")
-            }
-            Button(onClick = {
-                scope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar(
-                        "Recording stopped",
-                        duration = SnackbarDuration.Short
-                    )
-                }
-                recorder.stopRecord()
-            }) {
-                Text(text = "Stop recording")
             }
             Button(onClick = {
                 scope.launch {
@@ -154,16 +146,17 @@ fun MainActivity.MainScreen() {
             }) {
                 Text(text = "Generate spectrum")
             }
-            Button(onClick = {
-                scope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar(
-                        "Image deleted",
-                        duration = SnackbarDuration.Short
-                    )
-                }
-                var spectrum = File(cacheDir.absolutePath, "spectrum.png")
-                spectrum.delete()
-                imageBitmap.value = null
+            Button(
+                onClick = {
+                    scope.launch {
+                        scaffoldState.snackbarHostState.showSnackbar(
+                            "Image deleted",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                    var spectrum = File(cacheDir.absolutePath, "spectrum.png")
+                    spectrum.delete()
+                    imageBitmap.value = null
                 },
                 enabled = imageBitmap.value != null
             ) {
