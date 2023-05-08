@@ -3,17 +3,22 @@ package com.example.sps_21.page
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.widget.EditText
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
@@ -37,8 +42,13 @@ import java.io.File
 @Composable
 fun HomePageView(applicationContext: Context) {
     val scaffoldState = rememberScaffoldState()
+    // TODO: New notificaiton system needs be added
     val scope = rememberCoroutineScope()
+    // TODO: switch view will clear the image, need to fix
     val imageBitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val openDialog = remember { mutableStateOf(false) }
+    var editText = remember { mutableStateOf("") }
+
     val curContext = applicationContext
 
     val recorder by lazy {
@@ -73,12 +83,12 @@ fun HomePageView(applicationContext: Context) {
                 )
         ) {
             Button(onClick = {
-                scope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar(
-                        "Recording & Playing",
-                        duration = SnackbarDuration.Short
-                    )
-                }
+//                scope.launch {
+//                    scaffoldState.snackbarHostState.showSnackbar(
+//                        "Recording & Playing",
+//                        duration = SnackbarDuration.Short
+//                    )
+//                }
                 player.playChirp()
                 recorder.createRecorder()
                 File(curContext.cacheDir, "recording12.pcm").also {
@@ -89,25 +99,75 @@ fun HomePageView(applicationContext: Context) {
                 Text(text = "Start Program")
             }
             Button(onClick = {
-                scope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar(
-                        "spectrum",
-                        duration = SnackbarDuration.Short
-                    )
-                }
+//                scope.launch {
+//                    scaffoldState.snackbarHostState.showSnackbar(
+//                        "spectrum",
+//                        duration = SnackbarDuration.Short
+//                    )
+//                }
                 generateSpectrum()
                 loadImage()
             }) {
                 Text(text = "Generate spectrum")
             }
+
             Button(
                 onClick = {
-                    scope.launch {
-                        scaffoldState.snackbarHostState.showSnackbar(
-                            "Image deleted",
-                            duration = SnackbarDuration.Short
-                        )
+                    var spectrum = File(curContext.cacheDir.absolutePath, "spectrum.png")
+                    openDialog.value = true
+                },
+                enabled = imageBitmap.value != null
+            ) {
+                Text(text = "Save Image")
+            }
+
+            if (openDialog.value) {
+                AlertDialog(
+                    onDismissRequest = {openDialog.value = false},
+                    title = {
+                        Text(text = "Save Image")
+                    },
+                    text = {
+                        Column(
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            TextField(
+                                value = editText.value,
+                                onValueChange = { editText.value = it },
+                                label = { Text(text = "Room Number") },
+                                maxLines = 1
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                openDialog.value = false
+                            }
+                        ){
+                            Text(text = "Save")
+                        }
+                    },
+                    dismissButton = {
+                        Button(
+                            onClick = {
+                                openDialog.value = false
+                            }
+                        ){
+                            Text(text = "Cancel")
+                        }
                     }
+                )
+            }
+
+            Button(
+                onClick = {
+//                    scope.launch {
+//                        scaffoldState.snackbarHostState.showSnackbar(
+//                            "Image deleted",
+//                            duration = SnackbarDuration.Short
+//                        )
+//                    }
                     var spectrum = File(curContext.cacheDir.absolutePath, "spectrum.png")
                     spectrum.delete()
                     imageBitmap.value = null
