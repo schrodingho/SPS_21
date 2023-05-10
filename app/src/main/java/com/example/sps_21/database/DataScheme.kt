@@ -9,5 +9,6 @@ import androidx.room.PrimaryKey
 data class SpectrumData(
     @PrimaryKey val uid: Int,
     @ColumnInfo(name = "pic_name") val picName: Bitmap?,
+    @ColumnInfo(name = "freq_data") val freqData: DoubleArray?,
     @ColumnInfo(name = "loc_id") val locID: Int?
 )

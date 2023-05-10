@@ -50,7 +50,10 @@ fun HomePageView(applicationContext: Context) {
     var editText = remember { mutableStateOf("") }
 
     val curContext = applicationContext
+    var currentTimestamp = System.currentTimeMillis()
 
+    var pcmName = ""
+    var spectrumName = ""
     val recorder by lazy {
         Recorder(applicationContext)
     }
@@ -58,14 +61,14 @@ fun HomePageView(applicationContext: Context) {
         Player(applicationContext)
     }
 
-    fun loadImage() {
-        val bitmap = BitmapFactory.decodeFile(File(curContext.cacheDir, "spectrum.png").absolutePath)
+    fun loadImage(spectrumName: String) {
+        val bitmap = BitmapFactory.decodeFile(File(curContext.cacheDir, spectrumName).absolutePath)
         imageBitmap.value = bitmap
     }
 
-    fun generateSpectrum() {
-        var spectrum = File(curContext.cacheDir.absolutePath, "spectrum.png")
-        var pcm = File(curContext.cacheDir.absolutePath, "recording12.pcm")
+    fun generateSpectrum(pcmName: String, spectrumName: String) {
+        var spectrum = File(curContext.cacheDir.absolutePath, spectrumName)
+        var pcm = File(curContext.cacheDir.absolutePath, pcmName)
         //var filepath = pcm.absolutePath;
         //println("file path:,$filepath")
         SignalProcessing.pcmToSpectrum(pcm, spectrum)
@@ -91,7 +94,10 @@ fun HomePageView(applicationContext: Context) {
 //                }
                 player.playChirp()
                 recorder.createRecorder()
-                File(curContext.cacheDir, "recording12.pcm").also {
+                currentTimestamp = System.currentTimeMillis()
+                pcmName = "recording_$currentTimestamp.pcm"
+                spectrumName = "spectrum_$currentTimestamp.png"
+                File(curContext.cacheDir, pcmName).also {
                     recorder.startRecord(it)
                 }
 
@@ -105,15 +111,15 @@ fun HomePageView(applicationContext: Context) {
 //                        duration = SnackbarDuration.Short
 //                    )
 //                }
-                generateSpectrum()
-                loadImage()
+                generateSpectrum(pcmName, spectrumName)
+                loadImage(spectrumName)
             }) {
                 Text(text = "Generate spectrum")
             }
 
             Button(
                 onClick = {
-                    var spectrum = File(curContext.cacheDir.absolutePath, "spectrum.png")
+                    var spectrum = File(curContext.cacheDir.absolutePath, spectrumName)
                     openDialog.value = true
                 },
                 enabled = imageBitmap.value != null
@@ -168,7 +174,7 @@ fun HomePageView(applicationContext: Context) {
 //                            duration = SnackbarDuration.Short
 //                        )
 //                    }
-                    var spectrum = File(curContext.cacheDir.absolutePath, "spectrum.png")
+                    var spectrum = File(curContext.cacheDir.absolutePath, spectrumName)
                     spectrum.delete()
                     imageBitmap.value = null
                 },

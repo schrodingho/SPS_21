@@ -13,7 +13,7 @@ class Player(applicationContext: Context) {
     private val SAMPLE_RATE = 63333
     private val ENCODING = AudioFormat.ENCODING_PCM_16BIT
 
-    private val genFreq = 12000
+    private val genFreq = 14000
     private val PLAYER_CHANNEL = AudioFormat.CHANNEL_OUT_MONO
     private var TRACK_BUFFER_SIZE = 0
     private val PLAY_DURATION = 1
