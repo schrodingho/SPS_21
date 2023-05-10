@@ -2,7 +2,8 @@
 <resources>
 
     <style name="Theme.SPS_21" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/red_200</item>
+        <item name="android:statusBarColor">@color/red_600</item>
+        <item name="android:navigationBarColor">@color/red_600</item>
     </style>
 
 </resources>
