@@ -4,11 +4,11 @@ import android.graphics.Bitmap
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.io.File
 
 @Entity
 data class SpectrumData(
-    @PrimaryKey val uid: Int,
-    @ColumnInfo(name = "pic_name") val picName: Bitmap?,
-    @ColumnInfo(name = "freq_data") val freqData: DoubleArray?,
-    @ColumnInfo(name = "loc_id") val locID: Int?
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @ColumnInfo(name = "pcm_bytes") val pcmBytes: ByteArray?,
+    @ColumnInfo(name = "loc_id") val locID: String?
 )

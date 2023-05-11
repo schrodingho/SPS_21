@@ -16,10 +16,10 @@ fun Navigation(navController: NavHostController, applicationContext: Context) {
             HomePageView(applicationContext)
         }
         composable(NavigationItem.Data.route) {
-            DataPageView()
+            DataPageView(applicationContext)
         }
         composable(NavigationItem.Setting.route) {
-            SettingPageView()
+            SettingPageView(applicationContext)
         }
 
     }

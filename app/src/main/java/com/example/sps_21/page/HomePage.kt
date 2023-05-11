@@ -35,6 +35,9 @@ import coil.compose.rememberImagePainter
 import com.example.sps_21.Player
 import com.example.sps_21.Recorder
 import com.example.sps_21.SignalProcessing
+import com.example.sps_21.SpectrumData
+import com.example.sps_21.database.FileDao
+import com.example.sps_21.database.FilesDatabase
 import com.example.sps_21.ui.theme.Red600
 import kotlinx.coroutines.launch
 import java.io.File
@@ -46,6 +49,7 @@ fun HomePageView(applicationContext: Context) {
     val scope = rememberCoroutineScope()
     // TODO: switch view will clear the image, need to fix
     val imageBitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val pcmState = remember { mutableStateOf<File?>(null) }
     val openDialog = remember { mutableStateOf(false) }
     var editText = remember { mutableStateOf("") }
 
@@ -60,6 +64,11 @@ fun HomePageView(applicationContext: Context) {
     val player by lazy {
         Player(applicationContext)
     }
+
+
+    val database = FilesDatabase.getInstance(applicationContext)
+    var fileDao: FileDao = database!!.fileDao()
+
 
     fun loadImage(spectrumName: String) {
         val bitmap = BitmapFactory.decodeFile(File(curContext.cacheDir, spectrumName).absolutePath)
@@ -99,39 +108,41 @@ fun HomePageView(applicationContext: Context) {
                 spectrumName = "spectrum_$currentTimestamp.png"
                 File(curContext.cacheDir, pcmName).also {
                     recorder.startRecord(it)
+                    pcmState.value = it
                 }
 
             }) {
                 Text(text = "Start Program")
             }
             Button(onClick = {
-//                scope.launch {
-//                    scaffoldState.snackbarHostState.showSnackbar(
-//                        "spectrum",
-//                        duration = SnackbarDuration.Short
-//                    )
-//                }
-                generateSpectrum(pcmName, spectrumName)
-                loadImage(spectrumName)
-            }) {
+    //                scope.launch {
+    //                    scaffoldState.snackbarHostState.showSnackbar(
+    //                        "spectrum",
+    //                        duration = SnackbarDuration.Short
+    //                    )
+    //                }
+                    generateSpectrum(pcmName, spectrumName)
+                    loadImage(spectrumName)
+                },
+                enabled = pcmState.value != null
+            ) {
                 Text(text = "Generate spectrum")
             }
 
             Button(
                 onClick = {
-                    var spectrum = File(curContext.cacheDir.absolutePath, spectrumName)
                     openDialog.value = true
                 },
                 enabled = imageBitmap.value != null
             ) {
-                Text(text = "Save Image")
+                Text(text = "Save Data")
             }
 
             if (openDialog.value) {
                 AlertDialog(
                     onDismissRequest = {openDialog.value = false},
                     title = {
-                        Text(text = "Save Image")
+                        Text(text = "Save Data")
                     },
                     text = {
                         Column(
@@ -149,6 +160,18 @@ fun HomePageView(applicationContext: Context) {
                         Button(
                             onClick = {
                                 openDialog.value = false
+                                var pcmBytes = File(curContext.cacheDir.absolutePath, pcmName).readBytes()
+//                                var spectrum = File(curContext.cacheDir.absolutePath, spectrumName)
+                                var roomNumber = editText.value
+                                val newData = SpectrumData(
+                                    pcmBytes = pcmBytes,
+                                    locID = roomNumber,
+                                )
+
+                                Thread {
+                                    fileDao.insertData(newData)
+                                }.start()
+
                             }
                         ){
                             Text(text = "Save")

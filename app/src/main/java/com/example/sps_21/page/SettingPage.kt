@@ -1,5 +1,6 @@
 package com.example.sps_21.page
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 @Composable
-fun SettingPageView() {
+fun SettingPageView(applicationContext: Context) {
     Column(
         modifier = Modifier
             .fillMaxSize()

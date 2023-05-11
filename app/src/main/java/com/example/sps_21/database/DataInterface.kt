@@ -6,15 +6,22 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.example.sps_21.SpectrumData
+import java.io.File
 
 @Dao
 interface FileDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertFile(file: SpectrumData)
+    fun insertData(data: SpectrumData)
 
     @Delete
-    fun deleteFile(file: SpectrumData)
+    fun deleteData(data: SpectrumData)
 
+    @Query("delete from SpectrumData")
+    fun deleteAllData()
     @Query("SELECT * FROM SpectrumData")
-    fun loadAllFiles(): List<SpectrumData>
+    fun loadAllData(): List<SpectrumData>
+
+    @Query("SELECT * FROM SpectrumData ORDER BY id DESC LIMIT 1")
+    fun loadLastData(): SpectrumData
+
 }
