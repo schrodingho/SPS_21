@@ -10,7 +10,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
@@ -85,36 +88,47 @@ fun HomePageView(applicationContext: Context) {
 
     Scaffold(
         scaffoldState = scaffoldState,
-
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(paddingValues = innerPadding)
+                .fillMaxWidth()
                 .wrapContentSize(
                     Alignment.Center
-                )
+                ),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Button(onClick = {
+            Spacer(modifier = Modifier.padding(10.dp))
+            Button(
+                modifier = Modifier.width(200.dp),
+                onClick = {
 //                scope.launch {
 //                    scaffoldState.snackbarHostState.showSnackbar(
 //                        "Recording & Playing",
 //                        duration = SnackbarDuration.Short
 //                    )
 //                }
-                player.playChirp()
                 recorder.createRecorder()
                 currentTimestamp = System.currentTimeMillis()
                 pcmName = "recording_$currentTimestamp.pcm"
                 spectrumName = "spectrum_$currentTimestamp.png"
+
                 File(curContext.cacheDir, pcmName).also {
                     recorder.startRecord(it)
+                    player.playChirp()
                     pcmState.value = it
                 }
+
+
+
 
             }) {
                 Text(text = "Start Program")
             }
-            Button(onClick = {
+            Button(
+                modifier = Modifier.width(200.dp),
+                onClick = {
     //                scope.launch {
     //                    scaffoldState.snackbarHostState.showSnackbar(
     //                        "spectrum",
@@ -130,6 +144,7 @@ fun HomePageView(applicationContext: Context) {
             }
 
             Button(
+                modifier = Modifier.width(200.dp),
                 onClick = {
                     openDialog.value = true
                 },
@@ -190,6 +205,7 @@ fun HomePageView(applicationContext: Context) {
             }
 
             Button(
+                modifier = Modifier.width(200.dp),
                 onClick = {
 //                    scope.launch {
 //                        scaffoldState.snackbarHostState.showSnackbar(
@@ -205,17 +221,21 @@ fun HomePageView(applicationContext: Context) {
             ) {
                 Text(text = "Delete Image")
             }
-            Spacer(modifier = Modifier.padding(10.dp))
+            Spacer(modifier = Modifier.padding(8.dp))
 
             imageBitmap.value?.let {
                 Image(
                     painter = rememberImagePainter(it),
                     contentDescription = "Spectrum",
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(10.dp)
+                        .padding(5.dp)
                 )
+                Text(text = "Spectrum", fontSize = 20.sp, fontStyle = FontStyle.Italic)
+
             }
+
+
+
 
         }
     }
