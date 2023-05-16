@@ -14,10 +14,10 @@ class Player(applicationContext: Context) {
     private val SAMPLE_RATE = 63333
     private val ENCODING = AudioFormat.ENCODING_PCM_16BIT
 
-    private val genFreq = 21000
+    private val genFreq = 20000
     private val PLAYER_CHANNEL = AudioFormat.CHANNEL_OUT_MONO
     private var TRACK_BUFFER_SIZE = 0
-    private val PLAY_DURATION: Double = 0.1
+    private val PLAY_DURATION: Double = 0.01
     private val numSamples = (SAMPLE_RATE.toDouble() * PLAY_DURATION).toInt()
     private var samples = DoubleArray(numSamples)
     private var gSnd = ByteArray(2 * numSamples)
@@ -38,10 +38,10 @@ class Player(applicationContext: Context) {
             PLAYER_CHANNEL,
             ENCODING,
             TRACK_BUFFER_SIZE,
-            AudioTrack.MODE_STREAM
+            AudioTrack.MODE_STATIC
         )
+        generateChirp()
         player?.write(gSnd, 0, gSnd.size)
-        player?.play()
     }
 
     fun generateChirp() {
@@ -57,13 +57,13 @@ class Player(applicationContext: Context) {
         }
         val local_file = File(curContext.cacheDir.absolutePath, "generated_chirp.pcm")
         local_file.writeBytes(gSnd)
+
     }
 
     fun playChirp() {
         playingThread = Thread(
             Runnable {
-                generateChirp()
-                createPlayer()
+                player?.play()
             }
         )
         playingThread?.start()

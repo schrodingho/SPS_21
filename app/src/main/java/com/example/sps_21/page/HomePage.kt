@@ -110,6 +110,7 @@ fun HomePageView(applicationContext: Context) {
 //                    )
 //                }
                 recorder.createRecorder()
+                player.createPlayer()
                 currentTimestamp = System.currentTimeMillis()
                 pcmName = "recording_$currentTimestamp.pcm"
                 spectrumName = "spectrum_$currentTimestamp.png"
@@ -119,7 +120,6 @@ fun HomePageView(applicationContext: Context) {
                     player.playChirp()
                     pcmState.value = it
                 }
-
 
 
 
