@@ -26,13 +26,14 @@ class Player(applicationContext: Context) {
     val curContext = applicationContext
     private var player: AudioTrack? = null
     fun createPlayer() {
-        Log.v("numSamples", "$numSamples")
+//        Log.v("numSamples", "$numSamples")
         try {
             TRACK_BUFFER_SIZE = AudioTrack.getMinBufferSize(SAMPLE_RATE, PLAYER_CHANNEL, ENCODING)
             Log.v("buffersize", "$TRACK_BUFFER_SIZE")
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
         player = AudioTrack(
             AudioManager.STREAM_MUSIC,
             SAMPLE_RATE,
@@ -70,8 +71,10 @@ class Player(applicationContext: Context) {
         playingThread?.start()
     }
 
-    fun play_single_tone() {
-        player?.play()
+    fun stopChirp() {
+        isPlaying = false
+        playingThread?.interrupt()
+        playingThread = null
     }
 
 }
