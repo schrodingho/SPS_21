@@ -17,11 +17,12 @@ class Player(applicationContext: Context) {
     private val genFreq = 20000
     private val PLAYER_CHANNEL = AudioFormat.CHANNEL_OUT_MONO
     private var TRACK_BUFFER_SIZE = 0
-    private val PLAY_DURATION: Double = 0.01
+    private val PLAY_DURATION: Double = 0.005
     private val numSamples = (SAMPLE_RATE.toDouble() * PLAY_DURATION).toInt()
     private var samples = DoubleArray(numSamples)
     private var gSnd = ByteArray(2 * numSamples)
     private var playingThread: Thread? = null
+    var isPlaying = false
     val curContext = applicationContext
     private var player: AudioTrack? = null
     fun createPlayer() {
@@ -55,8 +56,8 @@ class Player(applicationContext: Context) {
             gSnd[idx++] = (shortVal and 0x00ff).toByte()
             gSnd[idx++] = (shortVal and 0xff00.toShort()).toInt().ushr(8).toByte()
         }
-        val local_file = File(curContext.cacheDir.absolutePath, "generated_chirp.pcm")
-        local_file.writeBytes(gSnd)
+//        val local_file = File(curContext.cacheDir.absolutePath, "generated_chirp.pcm")
+//        local_file.writeBytes(gSnd)
 
     }
 
@@ -67,6 +68,10 @@ class Player(applicationContext: Context) {
             }
         )
         playingThread?.start()
+    }
+
+    fun play_single_tone() {
+        player?.play()
     }
 
 }

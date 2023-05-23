@@ -3,11 +3,14 @@ package com.example.sps_21.page
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Environment.getExternalStorageDirectory
 import android.widget.EditText
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +28,7 @@ import androidx.compose.material.TextField
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,6 +46,7 @@ import com.example.sps_21.SpectrumData
 import com.example.sps_21.database.FileDao
 import com.example.sps_21.database.FilesDatabase
 import com.example.sps_21.ui.theme.Red600
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -55,18 +60,28 @@ fun HomePageView(applicationContext: Context) {
     val pcmState = remember { mutableStateOf<File?>(null) }
     val openDialog = remember { mutableStateOf(false) }
     var editText = remember { mutableStateOf("") }
+    var editRoom = remember { mutableStateOf("") }
+    var autoState = remember { mutableStateOf(false) }
+    val buttonCLicked = remember {
+        mutableStateOf(false)
+    }
+    val coroutine = rememberCoroutineScope()
+
 
     val curContext = applicationContext
     var currentTimestamp = System.currentTimeMillis()
 
     var pcmName = ""
     var spectrumName = ""
+
+    var localPath = curContext.getExternalFilesDir(null)?.absolutePath
     val recorder by lazy {
         Recorder(applicationContext)
     }
     val player by lazy {
         Player(applicationContext)
     }
+
 
 
     val database = FilesDatabase.getInstance(applicationContext)
@@ -99,31 +114,76 @@ fun HomePageView(applicationContext: Context) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.padding(10.dp))
+            Row (modifier = Modifier
+                .padding(20.dp)
+                .wrapContentSize(
+                    Alignment.Center
+                )){
+                Button(onClick = {
+                    buttonCLicked.value = true
+
+                     },
+                    enabled = editRoom.value != ""
+                )
+                {
+                    Text(text = "Auto Click")
+                }
+                LaunchedEffect(buttonCLicked.value) {
+                    if (buttonCLicked.value) {
+                        autoState.value = true
+                        for (i in 0 until 5) {
+                            delay(1000L)
+                            coroutine.launch {
+//                                delay(1000L) // Delay for 1 second before each button click
+                                currentTimestamp = System.currentTimeMillis()
+                                pcmName = "recording_${currentTimestamp}_${editRoom.value}.pcm"
+                                val localFile = File(localPath, pcmName)
+                                recorder.createRecorder(localFile)
+                                player.createPlayer()
+
+                                recorder.createRecordThread()
+                                recorder.startRecord()
+                                player.playChirp()
+                            }
+                             // Delay for 1 second between each button click
+//                            buttonCLicked.value = true // Trigger the button click again
+                        }
+                        buttonCLicked.value = false
+                        autoState.value = false
+                    }
+                }
+                TextField(
+                    modifier = Modifier
+                        .width(100.dp),
+                    value = editRoom.value,
+                    onValueChange = { editRoom.value = it },
+                    label = { Text(text = "number") },
+                    maxLines = 1
+                )
+            }
+
+//            Spacer(modifier = Modifier.padding(10.dp))
             Button(
                 modifier = Modifier.width(200.dp),
                 onClick = {
-//                scope.launch {
-//                    scaffoldState.snackbarHostState.showSnackbar(
-//                        "Recording & Playing",
-//                        duration = SnackbarDuration.Short
-//                    )
-//                }
-                recorder.createRecorder()
-                player.createPlayer()
-                currentTimestamp = System.currentTimeMillis()
-                pcmName = "recording_$currentTimestamp.pcm"
-                spectrumName = "spectrum_$currentTimestamp.png"
+                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+                    recorder.createRecorder(cacheFilePath)
+                    player.createPlayer()
+                    currentTimestamp = System.currentTimeMillis()
+                    pcmName = "recording_temp.pcm"
+                    spectrumName = "spectrum_temp.png"
 
-                File(curContext.cacheDir, pcmName).also {
-                    recorder.startRecord(it)
+                    recorder.createRecordThread()
+                    recorder.startRecord()
+//                    player.play_single_tone()
+
                     player.playChirp()
-                    pcmState.value = it
-                }
+//                    player.playChirp()
+                    pcmState.value = cacheFilePath
 
-
-
-            }) {
+            },
+                enabled = !autoState.value
+            ) {
                 Text(text = "Start Program")
             }
             Button(
@@ -148,7 +208,7 @@ fun HomePageView(applicationContext: Context) {
                 onClick = {
                     openDialog.value = true
                 },
-                enabled = imageBitmap.value != null
+                enabled = !autoState.value && imageBitmap.value != null
             ) {
                 Text(text = "Save Data")
             }
@@ -177,7 +237,13 @@ fun HomePageView(applicationContext: Context) {
                                 openDialog.value = false
                                 var pcmBytes = File(curContext.cacheDir.absolutePath, pcmName).readBytes()
 //                                var spectrum = File(curContext.cacheDir.absolutePath, spectrumName)
+
+
                                 var roomNumber = editText.value
+                                currentTimestamp = System.currentTimeMillis()
+                                val file = File(localPath, "pcmbytes_${currentTimestamp}_$roomNumber.pcm")
+                                file.writeBytes(pcmBytes)
+
                                 val newData = SpectrumData(
                                     pcmBytes = pcmBytes,
                                     locID = roomNumber,
@@ -217,7 +283,7 @@ fun HomePageView(applicationContext: Context) {
                     spectrum.delete()
                     imageBitmap.value = null
                 },
-                enabled = imageBitmap.value != null
+                enabled = !autoState.value && imageBitmap.value != null
             ) {
                 Text(text = "Delete Image")
             }

@@ -22,7 +22,7 @@ class Recorder(applicationContext: Context) {
     private var recorder: AudioRecord? = null
     val curContext = applicationContext
 
-    fun createRecorder() {
+    fun createRecorder(saveFile: File) {
         if (ContextCompat.checkSelfPermission(
                 curContext,
                 Manifest.permission.RECORD_AUDIO
@@ -39,16 +39,14 @@ class Recorder(applicationContext: Context) {
         }
         recorder =
             AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE, CHANNEL, ENCODING, BUFFER_SIZE)
-    }
-
-    fun startRecord(saveFile: File) {
-        recorder?.startRecording()
-        isRecording = true
-
         outputStream = FileOutputStream(saveFile)
 
-        var recordDuration = 10;
+    }
+    fun createRecordThread() {
         recordingThread = Thread(Runnable {
+            recorder?.startRecording()
+            isRecording = true
+            var recordDuration = 10;
             val buffer = ShortArray(BUFFER_SIZE)
             while (isRecording) {
                 recordDuration -= 1
@@ -59,8 +57,12 @@ class Recorder(applicationContext: Context) {
                 outputStream?.write(toByteArray(buffer), 0, read * 2)
             }
         })
+    }
+
+    fun startRecord() {
         recordingThread?.start()
     }
+
 
     fun stopRecord() {
         isRecording = false

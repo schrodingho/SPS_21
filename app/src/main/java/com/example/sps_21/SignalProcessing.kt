@@ -19,7 +19,7 @@ class SignalProcessing {
             pcmFile: File,
             spectrumFile: File,
             sampleRate: Int = 63333,
-            fftSize: Int = 31666, // 16932
+            fftSize: Int = 16932, // 16932
         ) {
             val numFrames = pcmFile.length() / 2
             val input = pcmFile.readBytes()
@@ -64,7 +64,7 @@ class SignalProcessing {
 
 
             //////////////////////////////////////////////////////////
-            val chartWidth = 3000 // Width of the chart in pixels
+            val chartWidth = 1500 // Width of the chart in pixels
             val chartHeight = 1000 // Height of the chart in pixels
             val chartMargin = 0
             val chartBitmap = Bitmap.createBitmap(chartWidth, chartHeight, Bitmap.Config.ARGB_8888)
