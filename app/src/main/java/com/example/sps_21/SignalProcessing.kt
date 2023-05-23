@@ -19,7 +19,7 @@ class SignalProcessing {
             pcmFile: File,
             spectrumFile: File,
             sampleRate: Int = 63333,
-            fftSize: Int = 16932
+            fftSize: Int = 16932, // 16932
         ) {
             val numFrames = pcmFile.length() / 2
             val input = pcmFile.readBytes()
@@ -32,11 +32,11 @@ class SignalProcessing {
             val paddedLength = Integer.highestOneBit(inputLength - 1) shl 1
             val paddled = ShortArray(paddedLength)
             val transform_lenth = min(paddedLength, fftSize)
-            var frequencies = DoubleArray(transform_lenth / 2)
+            var frequencies = DoubleArray(transform_lenth)
             val test_input = DoubleArray(transform_lenth)
             for (i in 0 until transform_lenth) {
                 test_input[i] =
-                    (Math.sin(2.0 * Math.PI * i.toDouble() / (sampleRate / 20000)) + Math.sin(2.0 * Math.PI * i.toDouble() / (sampleRate / 20000)))//500hz sinwave
+                    400000*(Math.sin(2.0 * Math.PI * i.toDouble() / (sampleRate / 500)))//500hz sinwave
             }
             for (i in 0 until transform_lenth) {
                 if (i * 2 < input.size) {
@@ -53,8 +53,8 @@ class SignalProcessing {
                         0.0
                     )
                 }.toTypedArray(), org.apache.commons.math3.transform.TransformType.FORWARD)
-                // val transformed = transformer.transform(test_input.map { org .apache.commons.math3.complex.Complex(it.toDouble(),0.0)}.toTypedArray(),org.apache.commons.math3.transform.TransformType.FORWARD)
-                for (i in 0 until transform_lenth / 2) {
+//                 val transformed = transformer.transform(test_input.map { org .apache.commons.math3.complex.Complex(it.toDouble(),0.0)}.toTypedArray(),org.apache.commons.math3.transform.TransformType.FORWARD)
+                for (i in 0 until transform_lenth) {
                     frequencies[i] = transformed[i].abs()
                 }
             } catch (e: Exception) {
@@ -73,7 +73,7 @@ class SignalProcessing {
             val barPaint = Paint()
             barPaint.color = Color.BLACK
             barPaint.style = Paint.Style.FILL
-            val barWidth = (chartWidth - 2 * chartMargin) / (transform_lenth.toFloat() / 2)
+            val barWidth = (chartWidth - 2 * chartMargin) / (transform_lenth.toFloat())
             val barSpacing = 0
             val maxAmplitude = 500000
             // val index = frequencies.indexOfFirst { it==maxAmplitude }

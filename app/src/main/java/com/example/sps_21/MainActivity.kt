@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.widget.Space
@@ -46,22 +48,19 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import androidx.navigation.Navigation
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberImagePainter
+import com.example.sps_21.component.BottomNavBar
 import com.example.sps_21.ui.theme.Primary200
 import com.example.sps_21.ui.theme.Primary700
 import com.example.sps_21.ui.theme.Red600
 import com.example.sps_21.ui.theme.SPS_21Theme
-
+import com.example.sps_21.navigation.Navigation
 
 class MainActivity : ComponentActivity() {
-    val recorder by lazy {
-        Recorder(applicationContext)
-    }
-    val player by lazy {
-        Player(applicationContext)
-    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,34 +73,19 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             SPS_21Theme {
-                MainScreen()
+                MainScreen(applicationContext)
             }
         }
     }
 
-    fun generateSpectrum() {
-        var spectrum = File(cacheDir.absolutePath, "spectrum.png")
-        var pcm = File(cacheDir.absolutePath, "recording12.pcm")
-        //var filepath = pcm.absolutePath;
-        //println("file path:,$filepath")
-        SignalProcessing.pcmToSpectrum(pcm, spectrum)
-    }
-
 }
 
+
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun MainActivity.MainScreen() {
-    val scaffoldState = rememberScaffoldState()
-    val scope = rememberCoroutineScope()
-    val imageBitmap = remember { mutableStateOf<Bitmap?>(null) }
-
-    fun loadImage() {
-        val bitmap = BitmapFactory.decodeFile(File(cacheDir, "spectrum.png").absolutePath)
-        imageBitmap.value = bitmap
-    }
-
+fun MainScreen(applicationContext: Context) {
+    val navController = rememberNavController()
     Scaffold(
-        scaffoldState = scaffoldState,
         topBar = {
             TopAppBar(
                 title =
@@ -110,86 +94,12 @@ fun MainActivity.MainScreen() {
                 }, backgroundColor = Red600
             )
         },
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues = innerPadding)
-                .wrapContentSize(
-                    Alignment.Center
-                )
-        ) {
-            Button(onClick = {
-                scope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar(
-                        "Recording & Playing",
-                        duration = SnackbarDuration.Short
-                    )
-                }
-                player.playChirp()
-                recorder.createRecorder()
-                File(cacheDir, "recording12.pcm").also {
-                    recorder.startRecord(it)
-                }
-
-            }) {
-                Text(text = "Start Program")
-            }
-            Button(onClick = {
-                scope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar(
-                        "spectrum",
-                        duration = SnackbarDuration.Short
-                    )
-                }
-                generateSpectrum()
-                loadImage()
-            }) {
-                Text(text = "Generate spectrum")
-            }
-            Button(
-                onClick = {
-                    scope.launch {
-                        scaffoldState.snackbarHostState.showSnackbar(
-                            "Image deleted",
-                            duration = SnackbarDuration.Short
-                        )
-                    }
-                    var spectrum = File(cacheDir.absolutePath, "spectrum.png")
-                    spectrum.delete()
-                    imageBitmap.value = null
-                },
-                enabled = imageBitmap.value != null
-            ) {
-                Text(text = "Delete Image")
-            }
-            Spacer(modifier = Modifier.padding(10.dp))
-
-            imageBitmap.value?.let {
-                Image(
-                    painter = rememberImagePainter(it),
-                    contentDescription = "Spectrum",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(10.dp)
-                )
-            }
-
+        bottomBar = {
+            BottomNavBar(navController)
         }
+    ) {
+        Navigation(navController = navController, applicationContext = applicationContext)
     }
 }
 
 
-@Composable
-fun ProfileScreenView() {
-    Column {
-        Text(text = "Profile Screen")
-    }
-}
-
-@Composable
-fun AboutScreenView() {
-    Column {
-        Text(text = "Group 21")
-        Text(text = "Members: Dinghao Xue & Junyu Lu")
-    }
-}
