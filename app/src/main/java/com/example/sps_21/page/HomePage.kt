@@ -131,6 +131,7 @@ fun HomePageView(applicationContext: Context) {
                 LaunchedEffect(buttonCLicked.value) {
                     if (buttonCLicked.value) {
                         autoState.value = true
+                        player.createPlayer()
                         for (i in 0 until 100) {
                             coroutine.launch {
                                 delay(1000L) // Delay for 1 second before each button click
@@ -138,12 +139,10 @@ fun HomePageView(applicationContext: Context) {
                                 pcmName = "recording_${currentTimestamp}_${editRoom.value}.pcm"
                                 val localFile = File(localPath, pcmName)
                                 recorder.createRecorder(localFile)
-                                player.createPlayer()
-
                                 recorder.createRecordThread()
                                 recorder.startRecord()
-                                player.playChirp()
-
+//                                player.playChirp()
+                                player.playManyTimes()
                             }
 
                             delay(1000L) // Delay for 1 second between each button click

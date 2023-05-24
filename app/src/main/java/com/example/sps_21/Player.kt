@@ -34,16 +34,16 @@ class Player(applicationContext: Context) {
             e.printStackTrace()
         }
 
-        player = AudioTrack(
-            AudioManager.STREAM_MUSIC,
-            SAMPLE_RATE,
-            PLAYER_CHANNEL,
-            ENCODING,
-            TRACK_BUFFER_SIZE,
-            AudioTrack.MODE_STATIC
-        )
+//        player = AudioTrack(
+//            AudioManager.STREAM_MUSIC,
+//            SAMPLE_RATE,
+//            PLAYER_CHANNEL,
+//            ENCODING,
+//            TRACK_BUFFER_SIZE,
+//            AudioTrack.MODE_STATIC
+//        )
         generateChirp()
-        player?.write(gSnd, 0, gSnd.size)
+//        player?.write(gSnd, 0, gSnd.size)
     }
 
     fun generateChirp() {
@@ -71,10 +71,26 @@ class Player(applicationContext: Context) {
         playingThread?.start()
     }
 
-    fun stopChirp() {
-        isPlaying = false
-        playingThread?.interrupt()
-        playingThread = null
+    fun playManyTimes() {
+        playingThread = Thread(
+            Runnable {
+                player?.release()
+                player = AudioTrack(
+                    AudioManager.STREAM_MUSIC,
+                    SAMPLE_RATE,
+                    PLAYER_CHANNEL,
+                    ENCODING,
+                    TRACK_BUFFER_SIZE,
+                    AudioTrack.MODE_STATIC
+                )
+//        generateChirp()
+                player?.write(gSnd, 0, gSnd.size)
+                player?.play()
+            }
+        )
+        playingThread?.start()
     }
+
+
 
 }
