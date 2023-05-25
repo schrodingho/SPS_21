@@ -173,7 +173,8 @@ fun HomePageView(applicationContext: Context) {
 
                     recorder.createRecordThread()
                     recorder.startRecord()
-                    player.playChirp()
+//                    player.playChirp()
+                    player.playManyTimes()
 
 
 //                    player.playChirp()
