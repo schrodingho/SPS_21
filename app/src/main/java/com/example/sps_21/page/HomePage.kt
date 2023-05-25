@@ -131,25 +131,23 @@ fun HomePageView(applicationContext: Context) {
                 LaunchedEffect(buttonCLicked.value) {
                     if (buttonCLicked.value) {
                         autoState.value = true
-                        for (i in 0 until 5) {
-                            delay(1000L)
+                        player.createPlayer()
+                        for (i in 0 until 100) {
                             coroutine.launch {
-//                                delay(1000L) // Delay for 1 second before each button click
+                                delay(1000L) // Delay for 1 second before each button click
                                 currentTimestamp = System.currentTimeMillis()
                                 pcmName = "recording_${currentTimestamp}_${editRoom.value}.pcm"
                                 val localFile = File(localPath, pcmName)
                                 recorder.createRecorder(localFile)
-                                player.createPlayer()
-
                                 recorder.createRecordThread()
                                 recorder.startRecord()
-                                player.playChirp()
+//                                player.playChirp()
+                                player.playManyTimes()
                             }
-                             // Delay for 1 second between each button click
-//                            buttonCLicked.value = true // Trigger the button click again
+
+                            delay(1000L) // Delay for 1 second between each button click
+                            buttonCLicked.value = true // Trigger the button click again
                         }
-                        buttonCLicked.value = false
-                        autoState.value = false
                     }
                 }
                 TextField(
@@ -175,9 +173,10 @@ fun HomePageView(applicationContext: Context) {
 
                     recorder.createRecordThread()
                     recorder.startRecord()
-//                    player.play_single_tone()
+//                    player.playChirp()
+                    player.playManyTimes()
 
-                    player.playChirp()
+
 //                    player.playChirp()
                     pcmState.value = cacheFilePath
 
