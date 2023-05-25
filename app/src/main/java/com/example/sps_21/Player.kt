@@ -26,23 +26,24 @@ class Player(applicationContext: Context) {
     val curContext = applicationContext
     private var player: AudioTrack? = null
     fun createPlayer() {
-        Log.v("numSamples", "$numSamples")
+//        Log.v("numSamples", "$numSamples")
         try {
             TRACK_BUFFER_SIZE = AudioTrack.getMinBufferSize(SAMPLE_RATE, PLAYER_CHANNEL, ENCODING)
             Log.v("buffersize", "$TRACK_BUFFER_SIZE")
         } catch (e: Exception) {
             e.printStackTrace()
         }
-        player = AudioTrack(
-            AudioManager.STREAM_MUSIC,
-            SAMPLE_RATE,
-            PLAYER_CHANNEL,
-            ENCODING,
-            TRACK_BUFFER_SIZE,
-            AudioTrack.MODE_STATIC
-        )
+
+//        player = AudioTrack(
+//            AudioManager.STREAM_MUSIC,
+//            SAMPLE_RATE,
+//            PLAYER_CHANNEL,
+//            ENCODING,
+//            TRACK_BUFFER_SIZE,
+//            AudioTrack.MODE_STATIC
+//        )
         generateChirp()
-        player?.write(gSnd, 0, gSnd.size)
+//        player?.write(gSnd, 0, gSnd.size)
     }
 
     fun generateChirp() {
@@ -70,8 +71,26 @@ class Player(applicationContext: Context) {
         playingThread?.start()
     }
 
-    fun play_single_tone() {
-        player?.play()
+    fun playManyTimes() {
+        playingThread = Thread(
+            Runnable {
+                player?.release()
+                player = AudioTrack(
+                    AudioManager.STREAM_MUSIC,
+                    SAMPLE_RATE,
+                    PLAYER_CHANNEL,
+                    ENCODING,
+                    TRACK_BUFFER_SIZE,
+                    AudioTrack.MODE_STATIC
+                )
+//        generateChirp()
+                player?.write(gSnd, 0, gSnd.size)
+                player?.play()
+            }
+        )
+        playingThread?.start()
     }
+
+
 
 }
