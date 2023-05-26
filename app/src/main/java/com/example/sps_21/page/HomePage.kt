@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Environment.getExternalStorageDirectory
+import android.util.Log
 import android.widget.EditText
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -50,6 +51,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 
+import com.example.sps_21.infer.Transformer
+import java.io.FileOutputStream
+import java.io.IOException
+
 @Composable
 fun HomePageView(applicationContext: Context) {
     val scaffoldState = rememberScaffoldState()
@@ -62,6 +67,7 @@ fun HomePageView(applicationContext: Context) {
     var editText = remember { mutableStateOf("") }
     var editRoom = remember { mutableStateOf("") }
     var autoState = remember { mutableStateOf(false) }
+    var classResult = remember { mutableStateOf<Int?>(null) }
     val buttonCLicked = remember {
         mutableStateOf(false)
     }
@@ -82,7 +88,7 @@ fun HomePageView(applicationContext: Context) {
         Player(applicationContext)
     }
 
-
+    val inferModel = Transformer();
 
     val database = FilesDatabase.getInstance(applicationContext)
     var fileDao: FileDao = database!!.fileDao()
@@ -185,21 +191,32 @@ fun HomePageView(applicationContext: Context) {
             ) {
                 Text(text = "Start Program")
             }
+
             Button(
                 modifier = Modifier.width(200.dp),
                 onClick = {
-    //                scope.launch {
-    //                    scaffoldState.snackbarHostState.showSnackbar(
-    //                        "spectrum",
-    //                        duration = SnackbarDuration.Short
-    //                    )
-    //                }
                     generateSpectrum(pcmName, spectrumName)
                     loadImage(spectrumName)
                 },
                 enabled = pcmState.value != null
             ) {
                 Text(text = "Generate spectrum")
+            }
+
+//          Inference Part
+            Button(
+                modifier = Modifier.width(200.dp),
+                enabled = pcmState.value != null,
+                onClick = {
+                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+
+                    val moduleFileAbsoluteFilePath = File(
+                        assetFilePath(applicationContext, "model_1.pt")
+                    ).absolutePath
+//                    inferModel.loadModel(moduleFileAbsoluteFilePath)
+                    classResult.value = inferModel.readData(cacheFilePath, moduleFileAbsoluteFilePath)
+                }) {
+                Text(text = "Inference")
             }
 
             Button(
@@ -211,6 +228,8 @@ fun HomePageView(applicationContext: Context) {
             ) {
                 Text(text = "Save Data")
             }
+
+
 
             if (openDialog.value) {
                 AlertDialog(
@@ -286,22 +305,47 @@ fun HomePageView(applicationContext: Context) {
             ) {
                 Text(text = "Delete Image")
             }
+
             Spacer(modifier = Modifier.padding(8.dp))
 
+            classResult.value?.let {
+                Text(text = "Room Number: $it", fontSize = 20.sp, fontStyle = FontStyle.Italic)
+            }
             imageBitmap.value?.let {
                 Image(
                     painter = rememberImagePainter(it),
                     contentDescription = "Spectrum",
                     modifier = Modifier
-                        .padding(5.dp)
+                        .padding(3.dp)
                 )
-                Text(text = "Spectrum", fontSize = 20.sp, fontStyle = FontStyle.Italic)
-
+                Text(text = "Spectrum", fontSize = 10.sp, fontStyle = FontStyle.Italic)
             }
-
-
-
-
         }
     }
+}
+
+
+fun assetFilePath(context: Context, assetName: String): String? {
+    val file = File(context.filesDir, assetName)
+
+    try {
+        context.assets.open(assetName).use { `is` ->
+            FileOutputStream(file).use { os ->
+                val buffer = ByteArray(4 * 1024)
+                while (true) {
+                    val length = `is`.read(buffer)
+                    if (length <= 0)
+                        break
+                    os.write(buffer, 0, length)
+                }
+                os.flush()
+                os.close()
+            }
+            return file.absolutePath
+        }
+    } catch (e: IOException) {
+        Log.e("ModelLoading", "Error process asset $assetName to file path")
+    }
+
+    return null
 }
