@@ -170,12 +170,13 @@ fun HomePageView(applicationContext: Context) {
             Button(
                 modifier = Modifier.width(200.dp),
                 onClick = {
+                    pcmName = "recording_temp.pcm"
+                    spectrumName = "spectrum_temp.png"
                     val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
                     recorder.createRecorder(cacheFilePath)
                     player.createPlayer()
                     currentTimestamp = System.currentTimeMillis()
-                    pcmName = "recording_temp.pcm"
-                    spectrumName = "spectrum_temp.png"
+
 
                     recorder.createRecordThread()
                     recorder.startRecord()
@@ -185,6 +186,8 @@ fun HomePageView(applicationContext: Context) {
 
 //                    player.playChirp()
                     pcmState.value = cacheFilePath
+
+
 
             },
                 enabled = !autoState.value
@@ -208,13 +211,14 @@ fun HomePageView(applicationContext: Context) {
                 modifier = Modifier.width(200.dp),
                 enabled = pcmState.value != null,
                 onClick = {
-                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
 
+                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+//                    inferModel.pythonInit(applicationContext, cacheFilePath)
                     val moduleFileAbsoluteFilePath = File(
                         assetFilePath(applicationContext, "model_1.pt")
                     ).absolutePath
 //                    inferModel.loadModel(moduleFileAbsoluteFilePath)
-                    classResult.value = inferModel.readData(cacheFilePath, moduleFileAbsoluteFilePath)
+                    classResult.value = inferModel.pythonInit(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
                 }) {
                 Text(text = "Inference")
             }
