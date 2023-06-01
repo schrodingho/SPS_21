@@ -155,6 +155,8 @@ fun HomePageView(applicationContext: Context) {
                             buttonCLicked.value = true // Trigger the button click again
                         }
                     }
+                    buttonCLicked.value = false
+//                    recorder.stopRecord()
                 }
                 TextField(
                     modifier = Modifier
@@ -215,10 +217,11 @@ fun HomePageView(applicationContext: Context) {
                     val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
 //                    inferModel.pythonInit(applicationContext, cacheFilePath)
                     val moduleFileAbsoluteFilePath = File(
-                        assetFilePath(applicationContext, "model_1.pt")
+                        assetFilePath(applicationContext, "model_m.pt")
                     ).absolutePath
 //                    inferModel.loadModel(moduleFileAbsoluteFilePath)
-                    classResult.value = inferModel.pythonInit(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
+//                    classResult.value = inferModel.pythonInit(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
+                    classResult.value = inferModel.model2(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
                 }) {
                 Text(text = "Inference")
             }

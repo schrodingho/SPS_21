@@ -76,6 +76,8 @@ class Transformer {
         Log.v("maxIndex", "$maxIndex")
         return identifiedPosition
     }
+
+
     fun pythonInit(applicationContext: Context, inputFile: File, modelPath: String): Int? {
         module = Module.load(modelPath)
         inputData = inputFile.readBytes()
@@ -122,5 +124,32 @@ class Transformer {
         Log.v("maxIndex", "$maxIndex")
         return identifiedPosition
     }
+
+    fun model2(applicationContext: Context, inputFile: File, modelPath: String): Int? {
+        module = Module.load(modelPath)
+        inputData = inputFile.readBytes()
+        if (!Python.isStarted()) {
+            Python.start(AndroidPlatform(applicationContext))
+        }
+        val py = Python.getInstance()
+        val module_py = py.getModule("temp")
+        var inputSamples = module_py.callAttr("temp", inputData).toJava(FloatArray::class.java)
+
+        Log.v("python", "python res: ${inputSamples.size}")
+        var inputTensor = Tensor.fromBlob(inputSamples, longArrayOf(1, 333, 501))
+//        Log.v("TensorShape", "${inputTensor?.shape()?.contentToString()}")
+        Log.v("TensorData", "${inputTensor?.dataAsFloatArray?.contentToString()}")
+        val outputTensor = module?.forward(IValue.from(inputTensor))?.toTensor()
+        var outFloatArray = outputTensor?.dataAsFloatArray
+        fun <T : Comparable<T>> Iterable<T>.argmax(): Int? {
+            return withIndex().maxByOrNull { it.value }?.index
+        }
+        var maxIndex = outFloatArray?.asList()?.argmax()
+        val identifiedPosition = maxIndex?.plus(5)
+        Log.v("maxIndex", "$maxIndex")
+        return identifiedPosition
+    }
+
+
 
 }
