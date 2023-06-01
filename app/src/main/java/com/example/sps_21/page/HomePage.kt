@@ -217,11 +217,12 @@ fun HomePageView(applicationContext: Context) {
                     val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
 //                    inferModel.pythonInit(applicationContext, cacheFilePath)
                     val moduleFileAbsoluteFilePath = File(
-                        assetFilePath(applicationContext, "model_m.pt")
+                        assetFilePath(applicationContext, "model_1.pt")
                     ).absolutePath
+                    inferModel.cloudInfer(applicationContext, cacheFilePath)
 //                    inferModel.loadModel(moduleFileAbsoluteFilePath)
 //                    classResult.value = inferModel.pythonInit(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
-                    classResult.value = inferModel.model2(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
+//                    classResult.value = inferModel.model2(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
                 }) {
                 Text(text = "Inference")
             }
