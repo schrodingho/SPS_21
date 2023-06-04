@@ -2,16 +2,23 @@ package com.example.sps_21.infer
 
 import android.content.Context
 import android.util.Log
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.exceptions.JWTCreationException
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
+import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.google.cloud.aiplatform.v1.PredictionServiceClient
+import com.google.cloud.aiplatform.v1.PredictionServiceSettings
 import org.pytorch.IValue
 import org.pytorch.Module
 import org.pytorch.Tensor
+import uk.me.berndporr.iirj.Butterworth
 import java.io.File
-import kotlin.experimental.and
+import java.io.FileInputStream
+import java.security.interfaces.RSAPrivateKey
+import java.util.Date
 import kotlin.math.abs
-
-import uk.me.berndporr.iirj.*;
 
 
 //https://github.com/StevenJokess/Pytorch-Kotlin-Demo/blob/master/app/src/main/java/com/say/pytorchkotlindemo/ImageClassificationOperation.kt
@@ -133,6 +140,35 @@ class Transformer {
         val module_py = py.getModule("temp")
         var inputSamples = module_py.callAttr("cloud_infer", inputData).toJava(Int::class.java)
         Log.v("cloud_infer", "cloud_infer res: ${inputSamples}")
+    }
+
+
+    fun cloudjwt(applicationContext: Context, inputFile: File, jwtFile: File) {
+//        val credential = GoogleCredential.fromStream(FileInputStream(jwtFile))
+//        val privateKey = credential.serviceAccountPrivateKey
+//        val privateKeyId = credential.serviceAccountPrivateKeyId
+//
+//        val now = System.currentTimeMillis()
+//        try {
+//            val algorithm = Algorithm.RSA256(null, privateKey as RSAPrivateKey?)
+//            val signedJwt: String = JWT.create()
+//                .withKeyId(privateKeyId)
+//                .withIssuer("test-680@stable-sign-388019.iam.gserviceaccount.com")
+//                .withSubject("test-680@stable-sign-388019.iam.gserviceaccount.com")
+//                .withAudience("https://firestore.googleapis.com/")
+//                .withIssuedAt(Date(now))
+//                .withExpiresAt(Date(now + 3600 * 1000L))
+//                .sign(algorithm)
+//        } catch (e: JWTCreationException) {
+//            Log.v("JWT", "JWT error: ${e.message}")
+//            //Invalid Signing configuration / Couldn't convert Claims.
+//        }
+//        val client = PredictionServiceClient.create(
+//            PredictionServiceSettings.newBuilder()
+//                .setCredentialsProvider { credential }
+//                .setEndpoint()
+//                .build()
+//        )
     }
 //    fun model2(applicationContext: Context, inputFile: File, modelPath: String): Int? {
 //        module = Module.load(modelPath)

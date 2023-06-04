@@ -50,7 +50,7 @@ import com.example.sps_21.ui.theme.Red600
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
-
+import com.example.sps_21.infer.cloudService
 import com.example.sps_21.infer.Transformer
 import java.io.FileOutputStream
 import java.io.IOException
@@ -72,7 +72,7 @@ fun HomePageView(applicationContext: Context) {
         mutableStateOf(false)
     }
     val coroutine = rememberCoroutineScope()
-
+    val startButton = remember { mutableStateOf(false) }
 
     val curContext = applicationContext
     var currentTimestamp = System.currentTimeMillis()
@@ -88,8 +88,8 @@ fun HomePageView(applicationContext: Context) {
         Player(applicationContext)
     }
 
-    val inferModel = Transformer();
-
+    val inferModel = Transformer()
+    val cloudService = cloudService()
     val database = FilesDatabase.getInstance(applicationContext)
     var fileDao: FileDao = database!!.fileDao()
 
@@ -174,27 +174,39 @@ fun HomePageView(applicationContext: Context) {
                 onClick = {
                     pcmName = "recording_temp.pcm"
                     spectrumName = "spectrum_temp.png"
-                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-                    recorder.createRecorder(cacheFilePath)
-                    player.createPlayer()
-                    currentTimestamp = System.currentTimeMillis()
-
-
-                    recorder.createRecordThread()
-                    recorder.startRecord()
-//                    player.playChirp()
-                    player.playManyTimes()
-
-
-//                    player.playChirp()
-                    pcmState.value = cacheFilePath
-
-
-
+                    startButton.value = true
+//                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+//                    recorder.createRecorder(cacheFilePath)
+//                    player.createPlayer()
+//                    currentTimestamp = System.currentTimeMillis()
+//                    recorder.createRecordThread()
+//                    recorder.startRecord()
+////                    player.playChirp()
+//                    player.playManyTimes()
+////                    player.playChirp()
+//                    pcmState.value = cacheFilePath
             },
                 enabled = !autoState.value
             ) {
                 Text(text = "Start Program")
+            }
+            LaunchedEffect(startButton.value) {
+                player.createPlayer()
+                if (startButton.value) {
+                    coroutine.launch {
+                        delay(1000L)
+                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+                        recorder.createRecorder(cacheFilePath)
+                        recorder.createRecordThread()
+                        recorder.startRecord()
+                        player.playManyTimes()
+
+                    }
+                    delay(1000L) // Delay for 1 second between each button click
+                    startButton.value = true // Trigger the button click again
+                }
+                startButton.value = false
+
             }
 
             Button(
@@ -219,7 +231,12 @@ fun HomePageView(applicationContext: Context) {
                     val moduleFileAbsoluteFilePath = File(
                         assetFilePath(applicationContext, "model_1.pt")
                     ).absolutePath
-                    inferModel.cloudInfer(applicationContext, cacheFilePath)
+                    val credentialAbsPath = File(
+                        assetFilePath(applicationContext, "stable-sign-388019-c7da022c0572.json")
+                    ).absolutePath
+
+//                    cloudService.runService(credentialAbsPath, cacheFilePath)
+//                    inferModel.cloudInfer(applicationContext, cacheFilePath)
 //                    inferModel.loadModel(moduleFileAbsoluteFilePath)
 //                    classResult.value = inferModel.pythonInit(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
 //                    classResult.value = inferModel.model2(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
