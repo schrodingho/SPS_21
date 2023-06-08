@@ -54,7 +54,7 @@ import java.io.File
 import com.example.sps_21.infer.Transformer
 import java.io.FileOutputStream
 import java.io.IOException
-
+import com.example.sps_21.infer.Spectrogram
 @Composable
 fun HomePageView(applicationContext: Context) {
     val scaffoldState = rememberScaffoldState()
@@ -71,8 +71,12 @@ fun HomePageView(applicationContext: Context) {
     val buttonCLicked = remember {
         mutableStateOf(false)
     }
+    val buttonCLicked2 = remember {
+        mutableStateOf(false)
+    }
     val coroutine = rememberCoroutineScope()
-
+    val startButton = remember { mutableStateOf(false) }
+    val inferButton = remember { mutableStateOf(false) }
 
     val curContext = applicationContext
     var currentTimestamp = System.currentTimeMillis()
@@ -87,12 +91,14 @@ fun HomePageView(applicationContext: Context) {
     val player by lazy {
         Player(applicationContext)
     }
+    val inferModel by lazy {
+        Transformer()
+    }
 
-    val inferModel = Transformer();
 
     val database = FilesDatabase.getInstance(applicationContext)
     var fileDao: FileDao = database!!.fileDao()
-
+    val spect = Spectrogram()
 
     fun loadImage(spectrumName: String) {
         val bitmap = BitmapFactory.decodeFile(File(curContext.cacheDir, spectrumName).absolutePath)
@@ -105,6 +111,16 @@ fun HomePageView(applicationContext: Context) {
         //var filepath = pcm.absolutePath;
         //println("file path:,$filepath")
         SignalProcessing.pcmToSpectrum(pcm, spectrum)
+    }
+
+//    val cacheFilePath = File(curContext.cacheDir, "recording_temp8.pcm")
+//                    inferModel.pythonInit(applicationContext, cacheFilePath)
+    val moduleFileAbsoluteFilePath = File(assetFilePath(applicationContext, "model_m.ptl")).absolutePath
+
+    fun generateSpectrogram(pcmName: String, spectrumName: String) {
+        var spectrogram = File(curContext.cacheDir.absolutePath, spectrumName)
+        var pcm = File(curContext.cacheDir.absolutePath, pcmName)
+        spect.trans(pcm, spectrogram)
     }
 
     Scaffold(
@@ -127,12 +143,11 @@ fun HomePageView(applicationContext: Context) {
                 )){
                 Button(onClick = {
                     buttonCLicked.value = true
-
                      },
                     enabled = editRoom.value != ""
                 )
                 {
-                    Text(text = "Auto Click")
+                    Text(text = "Train Data")
                 }
                 LaunchedEffect(buttonCLicked.value) {
                     if (buttonCLicked.value) {
@@ -158,6 +173,39 @@ fun HomePageView(applicationContext: Context) {
                     buttonCLicked.value = false
 //                    recorder.stopRecord()
                 }
+                Button(onClick = {
+                    buttonCLicked2.value = true
+                },
+                    enabled = editRoom.value != ""
+                ){
+                    Text(text = "Test Data")
+                }
+                LaunchedEffect(buttonCLicked2.value) {
+                    if (buttonCLicked2.value) {
+                        autoState.value = true
+                        player.createPlayer()
+                        for (i in 0 until 10) {
+                            coroutine.launch {
+                                delay(1000L) // Delay for 1 second before each button click
+                                currentTimestamp = System.currentTimeMillis()
+                                pcmName = "recording_${currentTimestamp}_${editRoom.value}.pcm"
+                                val localFile = File(localPath, pcmName)
+                                recorder.createRecorder(localFile)
+                                recorder.createRecordThread()
+                                recorder.startRecord()
+//                                player.playChirp()
+                                player.playManyTimes()
+                            }
+
+                            delay(1000L) // Delay for 1 second between each button click
+                            buttonCLicked2.value = true // Trigger the button click again
+                        }
+                    }
+                    buttonCLicked2.value = false
+//                    recorder.stopRecord()
+                }
+
+
                 TextField(
                     modifier = Modifier
                         .width(100.dp),
@@ -173,34 +221,49 @@ fun HomePageView(applicationContext: Context) {
                 modifier = Modifier.width(200.dp),
                 onClick = {
                     pcmName = "recording_temp.pcm"
-                    spectrumName = "spectrum_temp.png"
-                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-                    recorder.createRecorder(cacheFilePath)
-                    player.createPlayer()
-                    currentTimestamp = System.currentTimeMillis()
+                    spectrumName = "spectrum_temp.json"
+                    startButton.value = true
 
-
-                    recorder.createRecordThread()
-                    recorder.startRecord()
-//                    player.playChirp()
-                    player.playManyTimes()
-
-
-//                    player.playChirp()
-                    pcmState.value = cacheFilePath
-
-
-
+//                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+//                    recorder.createRecorder(cacheFilePath)
+//                    player.createPlayer()
+//                    currentTimestamp = System.currentTimeMillis()
+//                    recorder.createRecordThread()
+//                    recorder.startRecord()
+////                    player.playChirp()
+//                    player.playManyTimes()
+////                    player.playChirp()
+//
             },
                 enabled = !autoState.value
             ) {
                 Text(text = "Start Program")
             }
+            LaunchedEffect(startButton.value) {
+                player.createPlayer()
+                if (startButton.value) {
+                    coroutine.launch {
+                        delay(1000L)
+                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+                        pcmState.value = cacheFilePath
+                        recorder.createRecorder(cacheFilePath)
+                        recorder.createRecordThread()
+                        recorder.startRecord()
+                        player.playManyTimes()
+
+                    }
+                    delay(1000L) // Delay for 1 second between each button click
+                    startButton.value = true // Trigger the button click again
+                }
+                startButton.value = false
+            }
 
             Button(
                 modifier = Modifier.width(200.dp),
                 onClick = {
-                    generateSpectrum(pcmName, spectrumName)
+//                    generateSpectrum(pcmName, spectrumName)
+                    pcmName = "recording_temp5.pcm"
+                    generateSpectrogram(pcmName, spectrumName)
                     loadImage(spectrumName)
                 },
                 enabled = pcmState.value != null
@@ -213,19 +276,34 @@ fun HomePageView(applicationContext: Context) {
                 modifier = Modifier.width(200.dp),
                 enabled = pcmState.value != null,
                 onClick = {
-
-                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-//                    inferModel.pythonInit(applicationContext, cacheFilePath)
-                    val moduleFileAbsoluteFilePath = File(
-                        assetFilePath(applicationContext, "model_1.pt")
-                    ).absolutePath
-                    inferModel.cloudInfer(applicationContext, cacheFilePath)
+                    inferButton.value = true
+                    coroutine.launch {
+                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+                        classResult.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath)
+                    }
+//                    val cacheFilePath = File(curContext.cacheDir, "recording_temp5.pcm")
+////                    inferModel.pythonInit(applicationContext, cacheFilePath)
+//                    val moduleFileAbsoluteFilePath = File(
+//                        assetFilePath(applicationContext, "model_m.ptl")
+//                    ).absolutePath
+//                    inferModel.cloudInfer(applicationContext, cacheFilePath)
 //                    inferModel.loadModel(moduleFileAbsoluteFilePath)
 //                    classResult.value = inferModel.pythonInit(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
-//                    classResult.value = inferModel.model2(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
+
+
                 }) {
                 Text(text = "Inference")
             }
+//            LaunchedEffect(inferButton.value) {
+//                    coroutine.launch {
+//                        val inferModel = Transformer()
+//                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+//                        classResult.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath)
+//                }
+//                inferButton.value = false
+//            }
+
+
 
             Button(
                 modifier = Modifier.width(200.dp),
@@ -354,6 +432,5 @@ fun assetFilePath(context: Context, assetName: String): String? {
     } catch (e: IOException) {
         Log.e("ModelLoading", "Error process asset $assetName to file path")
     }
-
     return null
 }

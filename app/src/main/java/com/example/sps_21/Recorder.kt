@@ -46,7 +46,7 @@ class Recorder(applicationContext: Context) {
         recordingThread = Thread(Runnable {
             recorder?.startRecording()
             isRecording = true
-            var recordDuration = 10;
+            var recordDuration = 10
             val buffer = ShortArray(BUFFER_SIZE)
             while (isRecording) {
                 recordDuration -= 1
