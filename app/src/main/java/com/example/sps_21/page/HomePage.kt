@@ -55,6 +55,8 @@ import com.example.sps_21.infer.Transformer
 import java.io.FileOutputStream
 import java.io.IOException
 import com.example.sps_21.infer.Spectrogram
+import kotlinx.coroutines.newSingleThreadContext
+
 @Composable
 fun HomePageView(applicationContext: Context) {
     val scaffoldState = rememberScaffoldState()
@@ -67,7 +69,8 @@ fun HomePageView(applicationContext: Context) {
     var editText = remember { mutableStateOf("") }
     var editRoom = remember { mutableStateOf("") }
     var autoState = remember { mutableStateOf(false) }
-    var classResult = remember { mutableStateOf<Int?>(null) }
+    var classResult = remember { mutableStateOf<String?>(null) }
+    classResult.value = "None"
     val buttonCLicked = remember {
         mutableStateOf(false)
     }
@@ -115,7 +118,7 @@ fun HomePageView(applicationContext: Context) {
 
 //    val cacheFilePath = File(curContext.cacheDir, "recording_temp8.pcm")
 //                    inferModel.pythonInit(applicationContext, cacheFilePath)
-    val moduleFileAbsoluteFilePath = File(assetFilePath(applicationContext, "model_m16.ptl")).absolutePath
+    val moduleFileAbsoluteFilePath = File(assetFilePath(applicationContext, "model_m10.ptl")).absolutePath
 
     fun generateSpectrogram(pcmName: String, spectrumName: String) {
         var spectrogram = File(curContext.cacheDir.absolutePath, spectrumName)
@@ -155,7 +158,6 @@ fun HomePageView(applicationContext: Context) {
                         player.createPlayer()
                         for (i in 0 until 100) {
                             coroutine.launch {
-//                                delay(500L) // Delay for 1 second before each button click
                                 currentTimestamp = System.currentTimeMillis()
                                 pcmName = "recording_${currentTimestamp}_${editRoom.value}.pcm"
                                 val localFile = File(localPath, pcmName)
@@ -184,9 +186,8 @@ fun HomePageView(applicationContext: Context) {
                     if (buttonCLicked2.value) {
                         autoState.value = true
                         player.createPlayer()
-                        for (i in 0 until 10) {
-                            coroutine.launch {
-//                                delay(500L) // Delay for 1 second before each button click
+//                        for (i in 0 until 1) {
+//                            coroutine.launch {
                                 currentTimestamp = System.currentTimeMillis()
                                 pcmName = "recording_${currentTimestamp}_${editRoom.value}.pcm"
                                 val localFile = File(localPath, pcmName)
@@ -195,11 +196,11 @@ fun HomePageView(applicationContext: Context) {
                                 recorder.startRecord()
 //                                player.playChirp()
                                 player.playManyTimes()
-                            }
+//                            }
 
                             delay(600L) // Delay for 1 second between each button click
                             buttonCLicked2.value = true // Trigger the button click again
-                        }
+//                        }
                     }
                     buttonCLicked2.value = false
 //                    recorder.stopRecord()
@@ -240,19 +241,18 @@ fun HomePageView(applicationContext: Context) {
                 Text(text = "Start Program")
             }
             LaunchedEffect(startButton.value) {
+                classResult.value = "None"
                 player.createPlayer()
                 if (startButton.value) {
-                    coroutine.launch {
-//                        delay(500L)
-                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-                        pcmState.value = cacheFilePath
-                        recorder.createRecorder(cacheFilePath)
-                        recorder.createRecordThread()
-                        recorder.startRecord()
-                        player.playManyTimes()
 
-                    }
-                    delay(600L) // Delay for 1 second between each button click
+                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+                    pcmState.value = cacheFilePath
+                    recorder.createRecorder(cacheFilePath)
+                    recorder.createRecordThread(10)
+                    recorder.startRecord()
+                    player.playManyTimes()
+
+                    delay(1000L) // Delay for 1 second between each button click
                     startButton.value = true // Trigger the button click again
                 }
                 startButton.value = false
@@ -276,10 +276,11 @@ fun HomePageView(applicationContext: Context) {
                 modifier = Modifier.width(200.dp),
                 enabled = pcmState.value != null,
                 onClick = {
+                    classResult.value = "None"
                     inferButton.value = true
-                    coroutine.launch {
+                    coroutine.launch(newSingleThreadContext("InferenceThread")) {
                         val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-                        classResult.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath)
+                        classResult.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath).toString()
                     }
 //                    val cacheFilePath = File(curContext.cacheDir, "recording_temp5.pcm")
 ////                    inferModel.pythonInit(applicationContext, cacheFilePath)

@@ -42,11 +42,11 @@ class Recorder(applicationContext: Context) {
         outputStream = FileOutputStream(saveFile)
 
     }
-    fun createRecordThread() {
+    fun createRecordThread(Duration: Int = 5) {
         recordingThread = Thread(Runnable {
             recorder?.startRecording()
             isRecording = true
-            var recordDuration = 5
+            var recordDuration = Duration
             val buffer = ShortArray(BUFFER_SIZE)
             while (isRecording) {
                 recordDuration -= 1
@@ -58,6 +58,7 @@ class Recorder(applicationContext: Context) {
             }
         })
     }
+
 
     fun startRecord() {
         recordingThread?.start()
