@@ -134,15 +134,13 @@ fun HomePageView(applicationContext: Context) {
 
 //    val cacheFilePath = File(curContext.cacheDir, "recording_temp8.pcm")
 //                    inferModel.pythonInit(applicationContext, cacheFilePath)
-    val moduleFileAbsoluteFilePath = File(assetFilePath(applicationContext, "model_m10.ptl")).absolutePath
+    val moduleFileAbsoluteFilePath = File(assetFilePath(applicationContext, "model_m20.ptl")).absolutePath
 
     fun generateSpectrogram(pcmName: String, spectrumName: String) {
         var spectrogram = File(curContext.cacheDir.absolutePath, spectrumName)
         var pcm = File(curContext.cacheDir.absolutePath, pcmName)
         val get = spect.trans(pcm, spectrogram)
     }
-
-
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -227,10 +225,10 @@ fun HomePageView(applicationContext: Context) {
                 Button(onClick = {
                     coroutine.launch(newSingleThreadContext("WifiThread")) {
                         wifiButton.value = false
-                        for (i in 0 until 10) {
+                        for (i in 0 until 100) {
                             val curTime = System.currentTimeMillis()
                             wifiCollector.getWifiInfo(File(wifiFilePath, "wifiInfo_${curTime}_${editRoom.value}.json"))
-                            delay(500L)
+                            delay(300L)
                         }
                         wifiButton.value = true
                     }
@@ -278,7 +276,7 @@ fun HomePageView(applicationContext: Context) {
                     recorder.startRecord()
                     player.playManyTimes()
 
-                    delay(1000L) // Delay for 1 second between each button click
+                    delay(600L) // Delay for 1 second between each button click
                     startButton.value = true // Trigger the button click again
                     inferButton.value = true
                 }
