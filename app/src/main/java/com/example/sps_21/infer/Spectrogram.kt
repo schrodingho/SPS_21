@@ -1,7 +1,10 @@
 package com.example.sps_21.infer
+import android.graphics.Bitmap
+import android.graphics.Color
 import com.github.psambit9791.jdsp.filter.Butterworth
 import com.github.psambit9791.jdsp.transform.ShortTimeFourier
 import java.io.File
+import java.io.FileOutputStream
 
 
 class Spectrogram {
@@ -35,7 +38,7 @@ class Spectrogram {
 
         var index_f: Int = 0
         var amplitude: Double = 10000.0
-        while (index_f < 8000 || index_f > 16000 ) {
+        while (index_f < 7000 || index_f > 16000 ) {
             for (i in 0 until signals.size) {
                 if (signals[i] > amplitude) {
                     index_f = i
@@ -57,7 +60,9 @@ class Spectrogram {
         stft.transform()
         var out = stft.getMagnitude(true)
         out = out.map { doublearraydivideby1000(it) }.toTypedArray()
-
+        if (outputFile != null) {
+            toGrayScale(out, outputFile)
+        }
         out = transpose_array(out)
 
 //        val outJson = Gson().toJson(out)
@@ -122,6 +127,52 @@ class Spectrogram {
             }
         }
         return output
+    }
+
+    fun toGrayScale(input: Array<DoubleArray>, outputFile: File?) {
+        var outMax = input[0][0];
+        var outMin = input[0][0];
+        val width = input[0].size;
+        val height = input.size
+
+        for (i in 0 until height) {
+            for (j in 0 until width) {
+                if (input[i][j] > outMax) {
+                    outMax = input[i][j]
+                }
+                if (input[i][j] < outMin) {
+                    outMin = input[i][j]
+                }
+            }
+        }
+
+
+        val image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        for (i in 0 until height) {
+            for (j in 0 until width) {
+                val normalizedValue = ((input[i][j] - outMin) / (outMax - outMin) * 255).toInt()
+//                val color = 255 - (out[i][j] * 255).toInt()
+                image.setPixel(j, i, Color.rgb(normalizedValue, normalizedValue, normalizedValue))
+
+//                image.setPixel(i, j, color)
+            }
+        }
+        image.compress(Bitmap.CompressFormat.PNG, 100, FileOutputStream(outputFile))
+
+
+//        val grayscalemap: Bitmap = Bitmap.createBitmap(input.size, input[0].size, Bitmap.Config.ARGB_8888)
+////        val d = Bitmap(input.size, c.Height)
+//
+//        for (i in 0 until input.size) {
+//            for (x in 0 until input[0].size) {
+//                val pixel = input[i][x].toInt()
+//                val oc: Color = c.GetPixel(i, x)
+//                val grayScale = (oc.R * 0.3 + oc.G * 0.59 + oc.B * 0.11)
+//                val nc: Color = Color.FromArgb(oc.A, grayScale, grayScale, grayScale)
+//                d.SetPixel(i, x, nc)
+//            }
+//        }
+
     }
 
 

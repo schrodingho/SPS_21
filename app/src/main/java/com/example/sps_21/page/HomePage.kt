@@ -43,10 +43,10 @@ import coil.compose.rememberImagePainter
 import com.example.sps_21.Player
 import com.example.sps_21.Recorder
 import com.example.sps_21.SignalProcessing
-import com.example.sps_21.SpectrumData
+
 import com.example.sps_21.database.FileDao
 import com.example.sps_21.database.FilesDatabase
-import com.example.sps_21.ui.theme.Red600
+
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
@@ -55,6 +55,7 @@ import com.example.sps_21.infer.Transformer
 import java.io.FileOutputStream
 import java.io.IOException
 import com.example.sps_21.infer.Spectrogram
+import com.example.sps_21.sensorfusion.WifiCollector
 import kotlinx.coroutines.newSingleThreadContext
 
 @Composable
@@ -80,6 +81,7 @@ fun HomePageView(applicationContext: Context) {
     val coroutine = rememberCoroutineScope()
     val startButton = remember { mutableStateOf(false) }
     val inferButton = remember { mutableStateOf(false) }
+    val wifiButton = remember { mutableStateOf(true) }
 
     val curContext = applicationContext
     var currentTimestamp = System.currentTimeMillis()
@@ -87,7 +89,18 @@ fun HomePageView(applicationContext: Context) {
     var pcmName = ""
     var spectrumName = ""
 
-    var localPath = curContext.getExternalFilesDir(null)?.absolutePath
+//    var localPath = curContext.getExternalFilesDir(null)?.absolutePath
+
+
+    val exFolderPath = curContext.getExternalFilesDir(null)?.absolutePath
+    val wifiFolder = File(exFolderPath, "WifiData")
+    wifiFolder.mkdir()
+    val wifiFilePath = wifiFolder.absolutePath
+
+    val audioFolder = File(exFolderPath, "AudioData")
+    audioFolder.mkdir()
+    val localPath = audioFolder.absolutePath
+
     val recorder by lazy {
         Recorder(applicationContext)
     }
@@ -96,6 +109,9 @@ fun HomePageView(applicationContext: Context) {
     }
     val inferModel by lazy {
         Transformer()
+    }
+    val wifiCollector by lazy {
+        WifiCollector(applicationContext)
     }
 
 
@@ -123,8 +139,10 @@ fun HomePageView(applicationContext: Context) {
     fun generateSpectrogram(pcmName: String, spectrumName: String) {
         var spectrogram = File(curContext.cacheDir.absolutePath, spectrumName)
         var pcm = File(curContext.cacheDir.absolutePath, pcmName)
-        spect.trans(pcm, spectrogram)
+        val get = spect.trans(pcm, spectrogram)
     }
+
+
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -150,7 +168,7 @@ fun HomePageView(applicationContext: Context) {
                     enabled = editRoom.value != ""
                 )
                 {
-                    Text(text = "Train Data")
+                    Text(text = "TrainC")
                 }
                 LaunchedEffect(buttonCLicked.value) {
                     if (buttonCLicked.value) {
@@ -180,7 +198,7 @@ fun HomePageView(applicationContext: Context) {
                 },
                     enabled = editRoom.value != ""
                 ){
-                    Text(text = "Test Data")
+                    Text(text = "TestC")
                 }
                 LaunchedEffect(buttonCLicked2.value) {
                     if (buttonCLicked2.value) {
@@ -206,6 +224,24 @@ fun HomePageView(applicationContext: Context) {
 //                    recorder.stopRecord()
                 }
 
+                Button(onClick = {
+                    coroutine.launch(newSingleThreadContext("WifiThread")) {
+                        wifiButton.value = false
+                        for (i in 0 until 10) {
+                            val curTime = System.currentTimeMillis()
+                            wifiCollector.getWifiInfo(File(wifiFilePath, "wifiInfo_${curTime}_${editRoom.value}.json"))
+                            delay(500L)
+                        }
+                        wifiButton.value = true
+                    }
+
+                },
+                    enabled = editRoom.value != "" && wifiButton.value
+                )
+                {
+                    Text(text = "WifiC")
+                }
+
 
                 TextField(
                     modifier = Modifier
@@ -223,18 +259,8 @@ fun HomePageView(applicationContext: Context) {
                 onClick = {
                     pcmName = "recording_temp.pcm"
                     spectrumName = "spectrum_temp.json"
+                    classResult.value = "None"
                     startButton.value = true
-
-//                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-//                    recorder.createRecorder(cacheFilePath)
-//                    player.createPlayer()
-//                    currentTimestamp = System.currentTimeMillis()
-//                    recorder.createRecordThread()
-//                    recorder.startRecord()
-////                    player.playChirp()
-//                    player.playManyTimes()
-////                    player.playChirp()
-//
             },
                 enabled = !autoState.value
             ) {
@@ -254,6 +280,13 @@ fun HomePageView(applicationContext: Context) {
 
                     delay(1000L) // Delay for 1 second between each button click
                     startButton.value = true // Trigger the button click again
+                    inferButton.value = true
+                }
+                if (inferButton.value) {
+//                    coroutine.launch(newSingleThreadContext("InferenceThread")) {
+                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+                        classResult.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath).toString()
+//                    }
                 }
                 startButton.value = false
             }
@@ -262,118 +295,32 @@ fun HomePageView(applicationContext: Context) {
                 modifier = Modifier.width(200.dp),
                 onClick = {
 //                    generateSpectrum(pcmName, spectrumName)
-                    pcmName = "recording_temp5.pcm"
+                    spectrumName = "spectrum_temp.png"
+                    pcmName = "recording_temp.pcm"
                     generateSpectrogram(pcmName, spectrumName)
                     loadImage(spectrumName)
                 },
-                enabled = pcmState.value != null
+                enabled = pcmState.value != null  && !autoState.value
             ) {
                 Text(text = "Generate spectrum")
             }
 
+
 //          Inference Part
-            Button(
-                modifier = Modifier.width(200.dp),
-                enabled = pcmState.value != null,
-                onClick = {
-                    classResult.value = "None"
-                    inferButton.value = true
-                    coroutine.launch(newSingleThreadContext("InferenceThread")) {
-                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-                        classResult.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath).toString()
-                    }
-//                    val cacheFilePath = File(curContext.cacheDir, "recording_temp5.pcm")
-////                    inferModel.pythonInit(applicationContext, cacheFilePath)
-//                    val moduleFileAbsoluteFilePath = File(
-//                        assetFilePath(applicationContext, "model_m.ptl")
-//                    ).absolutePath
-//                    inferModel.cloudInfer(applicationContext, cacheFilePath)
-//                    inferModel.loadModel(moduleFileAbsoluteFilePath)
-//                    classResult.value = inferModel.pythonInit(applicationContext, cacheFilePath, moduleFileAbsoluteFilePath)
-
-
-                }) {
-                Text(text = "Inference")
-            }
-//            LaunchedEffect(inferButton.value) {
-//                    coroutine.launch {
-//                        val inferModel = Transformer()
+//            Button(
+//                modifier = Modifier.width(200.dp),
+//                enabled = pcmState.value != null,
+//                onClick = {
+//                    classResult.value = "None"
+////                    inferButton.value = true
+//                    coroutine.launch(newSingleThreadContext("InferenceThread")) {
 //                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-//                        classResult.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath)
-//                }
-//                inferButton.value = false
+//                        classResult.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath).toString()
+//                    }
+//                }) {
+//                Text(text = "Inference")
 //            }
 
-
-
-            Button(
-                modifier = Modifier.width(200.dp),
-                onClick = {
-                    openDialog.value = true
-                },
-                enabled = !autoState.value && imageBitmap.value != null
-            ) {
-                Text(text = "Save Data")
-            }
-
-
-
-            if (openDialog.value) {
-                AlertDialog(
-                    onDismissRequest = {openDialog.value = false},
-                    title = {
-                        Text(text = "Save Data")
-                    },
-                    text = {
-                        Column(
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            TextField(
-                                value = editText.value,
-                                onValueChange = { editText.value = it },
-                                label = { Text(text = "Room Number") },
-                                maxLines = 1
-                            )
-                        }
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                openDialog.value = false
-                                var pcmBytes = File(curContext.cacheDir.absolutePath, pcmName).readBytes()
-//                                var spectrum = File(curContext.cacheDir.absolutePath, spectrumName)
-
-
-                                var roomNumber = editText.value
-                                currentTimestamp = System.currentTimeMillis()
-                                val file = File(localPath, "pcmbytes_${currentTimestamp}_$roomNumber.pcm")
-                                file.writeBytes(pcmBytes)
-
-                                val newData = SpectrumData(
-                                    pcmBytes = pcmBytes,
-                                    locID = roomNumber,
-                                )
-
-                                Thread {
-                                    fileDao.insertData(newData)
-                                }.start()
-
-                            }
-                        ){
-                            Text(text = "Save")
-                        }
-                    },
-                    dismissButton = {
-                        Button(
-                            onClick = {
-                                openDialog.value = false
-                            }
-                        ){
-                            Text(text = "Cancel")
-                        }
-                    }
-                )
-            }
 
             Button(
                 modifier = Modifier.width(200.dp),
@@ -435,3 +382,4 @@ fun assetFilePath(context: Context, assetName: String): String? {
     }
     return null
 }
+
