@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.os.Environment.getExternalStorageDirectory
 import android.util.Log
 import android.widget.EditText
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,10 +14,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.AlertDialog
@@ -35,8 +39,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
@@ -243,26 +251,26 @@ fun HomePageView(applicationContext: Context) {
 
                 TextField(
                     modifier = Modifier
-                        .width(100.dp),
+                        .width(70.dp),
                     value = editRoom.value,
                     onValueChange = { editRoom.value = it },
-                    label = { Text(text = "number") },
+                    label = { Text(text = "num") },
                     maxLines = 1
                 )
             }
 
-//            Spacer(modifier = Modifier.padding(10.dp))
+
             Button(
-                modifier = Modifier.width(200.dp),
+                modifier = Modifier.width(80.dp),
                 onClick = {
                     pcmName = "recording_temp.pcm"
                     spectrumName = "spectrum_temp.json"
                     classResult.value = "None"
                     startButton.value = true
-            },
+                },
                 enabled = !autoState.value
             ) {
-                Text(text = "Start Program")
+                Text(text = "Start")
             }
             LaunchedEffect(startButton.value) {
                 classResult.value = "None"
@@ -282,15 +290,15 @@ fun HomePageView(applicationContext: Context) {
                 }
                 if (inferButton.value) {
 //                    coroutine.launch(newSingleThreadContext("InferenceThread")) {
-                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-                        classResult.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath).toString()
+                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+                    classResult.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath).toString()
 //                    }
                 }
                 startButton.value = false
             }
 
             Button(
-                modifier = Modifier.width(200.dp),
+                modifier = Modifier.width(80.dp),
                 onClick = {
 //                    generateSpectrum(pcmName, spectrumName)
                     spectrumName = "spectrum_temp.png"
@@ -300,13 +308,13 @@ fun HomePageView(applicationContext: Context) {
                 },
                 enabled = pcmState.value != null  && !autoState.value
             ) {
-                Text(text = "Generate spectrum")
+                Text(text = "Spect")
             }
 
 
 //          Inference Part
 //            Button(
-//                modifier = Modifier.width(200.dp),
+//                modifier = Modifier.width(80.dp),
 //                enabled = pcmState.value != null,
 //                onClick = {
 //                    classResult.value = "None"
@@ -321,7 +329,7 @@ fun HomePageView(applicationContext: Context) {
 
 
             Button(
-                modifier = Modifier.width(200.dp),
+                modifier = Modifier.width(80.dp),
                 onClick = {
 //                    scope.launch {
 //                        scaffoldState.snackbarHostState.showSnackbar(
@@ -335,23 +343,35 @@ fun HomePageView(applicationContext: Context) {
                 },
                 enabled = !autoState.value && imageBitmap.value != null
             ) {
-                Text(text = "Delete Image")
+                Text(text = "Delete")
             }
+
+//            Spacer(modifier = Modifier.padding(10.dp))
+
 
             Spacer(modifier = Modifier.padding(8.dp))
 
             classResult.value?.let {
                 Text(text = "Room Number: $it", fontSize = 20.sp, fontStyle = FontStyle.Italic)
+//                Text(text = "", fontSize = 20.sp, fontStyle = FontStyle.Italic)
             }
+
             imageBitmap.value?.let {
                 Image(
                     painter = rememberImagePainter(it),
                     contentDescription = "Spectrum",
                     modifier = Modifier
-                        .padding(3.dp)
+                        .padding(5.dp)
+//                        .size(100.dp)
                 )
-                Text(text = "Spectrum", fontSize = 10.sp, fontStyle = FontStyle.Italic)
+                    Text(text = "Spectrum", fontSize = 15.sp, fontStyle = FontStyle.Italic)
             }
+
+//            drawMaps()
+
+
+
+
         }
     }
 }
@@ -381,3 +401,238 @@ fun assetFilePath(context: Context, assetName: String): String? {
     return null
 }
 
+
+//@OptIn(ExperimentalTextApi::class)
+//@Composable
+//fun drawMaps() {
+//    val scale = 25
+//    val y_offset = 30f
+//    val textMeasurer = rememberTextMeasurer()
+//    Canvas(modifier = Modifier
+//        .fillMaxSize()
+//        .wrapContentSize(Alignment.Center)
+//        ) {
+//        val canvasWidth = size.width
+//        val canvasHeight = size.height
+//        // west: C1 - C3
+//        drawLine(
+//            start = Offset(x = 0f, y = (1.56f) * scale),
+//            end = Offset(x = 4.80f * 3 * scale, y = (1.56f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 0f, y = (1.56f) * scale),
+//            end = Offset(x = 0f, y = (1.56f + 2.54f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 0f, y = (1.56f + 2.54f) * scale),
+//            end = Offset(x = 4.80f * 3 * scale, y = (1.56f + 2.54f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 1 * scale, y = (1.56f) * scale),
+//            end = Offset(x = 4.80f * 1 * scale, y = (1.56f + 2.54f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 2 * scale, y = (1.56f) * scale),
+//            end = Offset(x = 4.80f * 2 * scale, y = (1.56f + 2.54f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (1.56f) * scale),
+//            end = Offset(x = 4.80f * 3 * scale, y = (1.56f + 2.54f) * scale),
+//            color = Color.Black
+//        )
+//        // C8 - C9
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (1.56f) * scale),
+//            end = Offset(x = 4.80f * 3 * scale, y = 0f),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = 0f),
+//            end = Offset(x = ((4.80f) * 3 +3.57f) * scale , y = 0f),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = ((4.80f) * 3 +3.57f) * scale, y = 0f),
+//            end = Offset(x = ((4.80f) * 3 +3.57f) * scale, y = (3.26f + 2.75f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (3.26f + 2.75f) * scale),
+//            end = Offset(x = ((4.80f) * 3 + 3.57f) * scale, y = (3.26f + 2.75f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (3.26f + 2.75f) * scale),
+//            end = Offset(x = 4.80f * 3 * scale, y = (2.54f + 1.56f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (3.26f) * scale),
+//            end = Offset(x = ((4.80f) * 3 + 3.57f) * scale, y = (3.26f) * scale),
+//            color = Color.Black
+//        )
+//
+//        // C10
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (3.26f + 2.75f) * scale),
+//            end = Offset(x = 4.80f * 3 * scale, y = (3.26f + 2.75f + 3.81f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = (4.80f * 3 + 1.24f) * scale, y = (3.26f + 2.75f) * scale),
+//            end = Offset(x = (4.80f * 3 + 1.24f) * scale, y = (3.26f + 2.75f + 3.81f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = (4.80f * 3 + 1.24f) * scale, y = (3.26f + 2.75f + 3.81f) * scale),
+//            end = Offset(x = (4.80f * 3) * scale, y = (3.26f + 2.75f + 3.81f) * scale),
+//            color = Color.Black
+//        )
+//
+//
+//        // C7
+//        drawLine(
+//            start = Offset(x = (4.80f * 2) * scale, y = (2.54f + 1.56f) * scale),
+//            end = Offset(x = (4.80f * 2) * scale, y = (2.54f + 1.56f + 1.79f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = (4.80f * 2) * scale, y = (2.54f + 1.56f + 1.79f) * scale),
+//            end = Offset(x = (4.80f * 3) * scale, y = (2.54f + 1.56f + 1.79f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = (4.80f * 3) * scale, y = (2.54f + 1.56f) * scale),
+//            end = Offset(x = (4.80f * 3) * scale, y = (2.54f + 1.56f + 1.79f) * scale),
+//            color = Color.Black
+//        )
+//        //
+//
+//        // C4 - C6
+//        drawLine(
+//            start = Offset(x = (4.80f * 1 + 1.25f) * scale, y = (2.54f + 1.56f) * scale),
+//            end = Offset(x = (4.80f * 1 + 1.25f) * scale, y = (2.54f + 1.56f + 4.30f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = (4.80f * 1 + 1.25f) * scale, y = (2.54f + 1.56f + 4.30f) * scale),
+//            end = Offset(x = (4.80f * 1 + 1.25f + 2.30f) * scale, y = (2.54f + 1.56f + 4.30f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = (4.80f * 1 + 1.25f + 2.30f) * scale, y = (2.54f + 1.56f) * scale),
+//            end = Offset(x = (4.80f * 1 + 1.25f + 2.30f) * scale, y = (2.54f + 1.56f + 4.30f) * scale),
+//            color = Color.Black
+//        )
+//        //
+//        drawText(textMeasurer, "C1", topLeft = Offset(x = (4.80f * 3 * 1 / 6 * scale), y = (2.54f / 3 + 1.56f) * scale))
+//        drawText(textMeasurer, "C2", topLeft = Offset(x = (4.80f * 3 * 2 / 3 * 3 / 4 * scale), y = (2.54f / 3 + 1.56f) * scale))
+//        drawText(textMeasurer, "C3", topLeft = Offset(x = (4.80f * 3 * 3 / 3 * 5 / 6 * scale), y = (2.54f / 3 + 1.56f) * scale))
+//        drawText(textMeasurer, "C8", topLeft = Offset(x = (4.80f * 3 * scale) * 10 / 9, y = (3.26f / 2) * scale))
+//        drawText(textMeasurer, "C9", topLeft = Offset(x = (4.80f * 3 * scale) * 10 / 9, y = ((3.26f + 2.54f) / 3 + 1.56f) * scale))
+//        drawText(textMeasurer, "C10", topLeft = Offset(x = (4.80f * 3 * scale + 0.5f), y = (3.26f + 2.54f + 3.81f / 3) * scale))
+//
+////
+////        //east
+////        //
+//
+//
+//        //C11
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (3.26f + 2.75f) * scale + y_offset - (3.26f + 2.75f + 3.81f) * scale),
+//            end = Offset(x = 4.80f * 3 * scale, y = (3.26f + 2.75f + 3.81f) * scale + y_offset - (3.26f + 2.75f + 3.81f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = (4.80f * 3 + 1.24f) * scale, y = (3.26f + 2.75f) * scale + y_offset - (3.26f + 2.75f + 3.81f) * scale),
+//            end = Offset(x = (4.80f * 3 + 1.24f) * scale, y = (3.26f + 2.75f + 3.81f) * scale + y_offset - (3.26f + 2.75f + 3.81f) * scale),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = (4.80f * 3 + 1.24f) * scale, y = (3.26f + 2.75f + 3.81f) * scale + y_offset - (3.26f + 2.75f + 3.81f + 3.81f) * scale),
+//            end = Offset(x = (4.80f * 3) * scale, y = (3.26f + 2.75f + 3.81f) * scale + y_offset - (3.26f + 2.75f + 3.81f + 3.81f) * scale),
+//            color = Color.Black
+//        )
+//        //
+//
+//
+//        drawLine(
+//            start = Offset(x = 0f, y = (1.56f) * scale + y_offset),
+//            end = Offset(x = 4.80f * 3 * scale, y = (1.56f) * scale + y_offset),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 0f, y = (1.56f) * scale + y_offset),
+//            end = Offset(x = 0f, y = (1.56f + 2.54f) * scale + y_offset),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 0f, y = (1.56f + 2.54f) * scale + y_offset),
+//            end = Offset(x = 4.80f * 3 * scale, y = (1.56f + 2.54f) * scale + y_offset),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 1 * scale, y = (1.56f) * scale + y_offset),
+//            end = Offset(x = 4.80f * 1 * scale, y = (1.56f + 2.54f) * scale + y_offset),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 2 * scale, y = (1.56f) * scale + y_offset),
+//            end = Offset(x = 4.80f * 2 * scale, y = (1.56f + 2.54f) * scale + y_offset),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (1.56f) * scale + y_offset),
+//            end = Offset(x = 4.80f * 3 * scale, y = (1.56f + 2.54f) * scale + y_offset),
+//            color = Color.Black
+//        )
+//        // C8 - C9
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (1.56f) * scale + y_offset),
+//            end = Offset(x = 4.80f * 3 * scale, y = 0f + y_offset),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = 0f + y_offset),
+//            end = Offset(x = ((4.80f) * 3 +3.57f) * scale , y = 0f + y_offset),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = ((4.80f) * 3 +3.57f) * scale, y = 0f + y_offset),
+//            end = Offset(x = ((4.80f) * 3 +3.57f) * scale, y = (3.26f + 2.75f) * scale + y_offset),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (3.26f + 2.75f) * scale + y_offset),
+//            end = Offset(x = ((4.80f) * 3 + 3.57f) * scale, y = (3.26f + 2.75f) * scale + y_offset),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (3.26f + 2.75f) * scale + y_offset),
+//            end = Offset(x = 4.80f * 3 * scale, y = (2.54f + 1.56f) * scale + y_offset),
+//            color = Color.Black
+//        )
+//        drawLine(
+//            start = Offset(x = 4.80f * 3 * scale, y = (3.26f) * scale + y_offset),
+//            end = Offset(x = ((4.80f) * 3 + 3.57f) * scale, y = (3.26f) * scale + y_offset),
+//            color = Color.Black
+//        )
+//
+//        // C7
+//
+//        //
+//        // C4 - C6
+//        drawText(textMeasurer, "C16", topLeft = Offset(x = (4.80f * 3 * 1 / 6 * scale), y = (2.54f / 3 + 1.56f) * scale + y_offset))
+//        drawText(textMeasurer, "C15", topLeft = Offset(x = (4.80f * 3 * 2 / 3 * 3 / 4 * scale), y = (2.54f / 3 + 1.56f) * scale + y_offset))
+//        drawText(textMeasurer, "C14", topLeft = Offset(x = (4.80f * 3 * 3 / 3 * 5 / 6 * scale), y = (2.54f / 3 + 1.56f) * scale + y_offset))
+//        drawText(textMeasurer, "C12", topLeft = Offset(x = (4.80f * 3 * scale) * 10 / 9, y = (3.26f / 2) * scale + y_offset ))
+//        drawText(textMeasurer, "C13", topLeft = Offset(x = (4.80f * 3 * scale) * 10 / 9, y = ((3.26f + 2.54f) / 3 + 1.56f) * scale + y_offset))
+//        drawText(textMeasurer, "C11", topLeft = Offset(x = (4.80f * 3 * scale + 0.5f), y = (3.26f + 2.75f + 3.81f) * scale + y_offset - (3.26f + 2.75f + 3.81f + 3.81f / 2) * scale))
+//
+//    }
+//}

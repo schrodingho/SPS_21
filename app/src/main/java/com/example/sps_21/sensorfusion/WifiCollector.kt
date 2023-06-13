@@ -15,7 +15,6 @@ class WifiCollector(context: Context) {
     private val wifiManager: WifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
     private val applicationContext = context
 
-
     fun getWifiInfo(saveFile: File) {
         if (ActivityCompat.checkSelfPermission(
                 applicationContext,

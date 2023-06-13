@@ -27,13 +27,11 @@ class Transformer {
 //            Log.v("inputSamples", "${inputSamples?.size}")
             var inputTensor = Tensor.fromBlob(inputSamples!!, longArrayOf(1, 333, 513))
             val outputTensor = module?.forward(IValue.from(inputTensor))?.toTensor()
-
             var outFloatArray = outputTensor?.dataAsFloatArray
-//            Log.v("outFloatArray_String", "${outFloatArray.contentToString()}")
+            Log.v("outFloatArray_String", "${outFloatArray.contentToString()}")
             fun <T : Comparable<T>> Iterable<T>.argmax(): Int? {
                 return withIndex().maxByOrNull { it.value }?.index
             }
-
             var maxIndex = outFloatArray?.asList()?.argmax()
             identifiedPosition = maxIndex?.plus(1)
         }
