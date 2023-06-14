@@ -18,7 +18,8 @@ class Transformer {
 //    private var inferThread: Thread? = null
     private var inputSamples: FloatArray? = null
     private var identifiedPosition: Int? = null
-    suspend fun localInfer(inputFile: File, modelPath: String): Int? {
+    private var outFloatArray: FloatArray? = null
+    suspend fun localInfer(inputFile: File, modelPath: String): FloatArray? {
         if (module == null) {
             module = Module.load(modelPath)
         }
@@ -27,15 +28,15 @@ class Transformer {
 //            Log.v("inputSamples", "${inputSamples?.size}")
             var inputTensor = Tensor.fromBlob(inputSamples!!, longArrayOf(1, 333, 513))
             val outputTensor = module?.forward(IValue.from(inputTensor))?.toTensor()
-            var outFloatArray = outputTensor?.dataAsFloatArray
-            Log.v("outFloatArray_String", "${outFloatArray.contentToString()}")
-            fun <T : Comparable<T>> Iterable<T>.argmax(): Int? {
-                return withIndex().maxByOrNull { it.value }?.index
-            }
-            var maxIndex = outFloatArray?.asList()?.argmax()
-            identifiedPosition = maxIndex?.plus(1)
+            outFloatArray = outputTensor?.dataAsFloatArray
+//            Log.v("outFloatArray_String", "${outFloatArray.contentToString()}")
+//            fun <T : Comparable<T>> Iterable<T>.argmax(): Int? {
+//                return withIndex().maxByOrNull { it.value }?.index
+//            }
+//            var maxIndex = outFloatArray?.asList()?.argmax()
+//            identifiedPosition = maxIndex?.plus(1)
         }
-        return identifiedPosition!!
+        return outFloatArray!!
 
 
 

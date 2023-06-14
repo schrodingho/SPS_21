@@ -80,6 +80,9 @@ fun HomePageView(applicationContext: Context) {
     var autoState = remember { mutableStateOf(false) }
     var classResult = remember { mutableStateOf<String?>(null) }
     classResult.value = "None"
+    val allclass = remember {
+        mutableStateOf<FloatArray?>(null)
+    }
     val buttonCLicked = remember {
         mutableStateOf(false)
     }
@@ -233,14 +236,13 @@ fun HomePageView(applicationContext: Context) {
                 Button(onClick = {
                     coroutine.launch(newSingleThreadContext("WifiThread")) {
                         wifiButton.value = false
-                        for (i in 0 until 100) {
+                        for (i in 0 until 30 ) {
                             val curTime = System.currentTimeMillis()
-                            wifiCollector.getWifiInfo(File(wifiFilePath, "wifiInfo_${curTime}_${editRoom.value}.json"))
-                            delay(300L)
+                            wifiCollector.startProgram(File(wifiFilePath, "wifiInfo_${curTime}_${editRoom.value}.txt"))
+                            delay(7000L)
                         }
                         wifiButton.value = true
                     }
-
                 },
                     enabled = editRoom.value != "" && wifiButton.value
                 )
@@ -291,7 +293,12 @@ fun HomePageView(applicationContext: Context) {
                 if (inferButton.value) {
 //                    coroutine.launch(newSingleThreadContext("InferenceThread")) {
                     val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-                    classResult.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath).toString()
+                    allclass.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath)
+                    fun <T : Comparable<T>> Iterable<T>.argmax(): Int? {
+                        return withIndex().maxByOrNull { it.value }?.index
+                    }
+                    var maxIndex = allclass.value?.asList()?.argmax()
+                    classResult.value = maxIndex?.plus(1).toString()
 //                    }
                 }
                 startButton.value = false
@@ -349,11 +356,15 @@ fun HomePageView(applicationContext: Context) {
 //            Spacer(modifier = Modifier.padding(10.dp))
 
 
-            Spacer(modifier = Modifier.padding(8.dp))
+            Spacer(modifier = Modifier.padding(4.dp))
 
             classResult.value?.let {
-                Text(text = "Room Number: $it", fontSize = 20.sp, fontStyle = FontStyle.Italic)
-//                Text(text = "", fontSize = 20.sp, fontStyle = FontStyle.Italic)
+                Text(text = "Room Number: $it", fontSize = 15.sp, fontStyle = FontStyle.Italic)
+                for (i in 0 until 16) {
+                    Text(text = "${i+1}: ${String.format("%.3f", allclass.value?.get(i))}", fontSize = 12.sp, fontStyle = FontStyle.Italic)
+                }
+
+//                Text(text = "${allclass.value?.asList()}", fontSize = 10.sp, fontStyle = FontStyle.Italic)
             }
 
             imageBitmap.value?.let {
