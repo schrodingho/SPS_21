@@ -112,6 +112,29 @@ class WifiCollector(context: Context) {
 //        val outJson = Gson().toJson(strBuilder.toString())
         saveFile.writeText(strBuilder.toString())
     }
+
+    fun inference() {
+        if (ActivityCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+
+        }
+
+        val delim = ":"
+        val data = IntArray(10000);
+        wifiManager.startScan()
+        val scanResults = wifiManager.scanResults
+        for (scanResult in scanResults) {
+            val bssid = scanResult.BSSID
+            val signalStrength = scanResult.level
+            val decimal = (bssid.toLong(16) % 10000).toInt()
+            data[decimal] = signalStrength
+        }
+
+
+    }
 }
 
 

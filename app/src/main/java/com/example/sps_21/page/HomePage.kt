@@ -3,34 +3,20 @@ package com.example.sps_21.page
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.Environment.getExternalStorageDirectory
 import android.util.Log
-import android.widget.EditText
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
-import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.TopAppBar
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,32 +25,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.ExperimentalTextApi
-import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
 import com.example.sps_21.Player
 import com.example.sps_21.Recorder
 import com.example.sps_21.SignalProcessing
-
 import com.example.sps_21.database.FileDao
 import com.example.sps_21.database.FilesDatabase
-
+import com.example.sps_21.infer.Spectrogram
+import com.example.sps_21.infer.Transformer
+import com.example.sps_21.infer.WifiInfer
+import com.example.sps_21.sensorfusion.WifiCollector
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.newSingleThreadContext
 import java.io.File
-
-import com.example.sps_21.infer.Transformer
 import java.io.FileOutputStream
 import java.io.IOException
-import com.example.sps_21.infer.Spectrogram
-import com.example.sps_21.sensorfusion.WifiCollector
-import kotlinx.coroutines.newSingleThreadContext
 
 @Composable
 fun HomePageView(applicationContext: Context) {
@@ -90,9 +69,17 @@ fun HomePageView(applicationContext: Context) {
         mutableStateOf(false)
     }
     val coroutine = rememberCoroutineScope()
+    val coroutine2 = rememberCoroutineScope()
     val startButton = remember { mutableStateOf(false) }
     val inferButton = remember { mutableStateOf(false) }
     val wifiButton = remember { mutableStateOf(true) }
+
+    val wifiResult = remember { mutableStateOf<String?>(null) }
+    val wifiOn = remember {
+        mutableStateOf(true)
+    }
+
+//    var final_result: FloatArray? = null
 
     val curContext = applicationContext
     var currentTimestamp = System.currentTimeMillis()
@@ -124,6 +111,12 @@ fun HomePageView(applicationContext: Context) {
     val wifiCollector by lazy {
         WifiCollector(applicationContext)
     }
+    val wifimodel = File(assetFilePath(applicationContext, "model_m_wifi.pt")).absolutePath
+
+    val wifiInfer by lazy {
+        WifiInfer(applicationContext, wifimodel)
+    }
+
 
 
     val database = FilesDatabase.getInstance(applicationContext)
@@ -277,6 +270,9 @@ fun HomePageView(applicationContext: Context) {
             LaunchedEffect(startButton.value) {
                 classResult.value = "None"
                 player.createPlayer()
+                val results = wifiInfer.wifialways()
+
+//                var result = wifiInfer.inference2(results)
                 if (startButton.value) {
 
                     val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
@@ -290,19 +286,97 @@ fun HomePageView(applicationContext: Context) {
                     startButton.value = true // Trigger the button click again
                     inferButton.value = true
                 }
-                if (inferButton.value) {
-//                    coroutine.launch(newSingleThreadContext("InferenceThread")) {
-                    val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-                    allclass.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath)
-                    fun <T : Comparable<T>> Iterable<T>.argmax(): Int? {
-                        return withIndex().maxByOrNull { it.value }?.index
+                delay(6000L)
+                val results_new = wifiInfer.wifialways()
+                if (results_new != results) {
+                    var wifiresult = wifiInfer.inference2(results_new)
+                    if (inferButton.value) {
+                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+                        allclass.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath)
+
+//                        for (i in 0 until 16) {
+//                            allclass.value!![i] += wifiresult!![i]
+//                        }
+
+                        var dotProduct = 0.0
+                        var normA = 0.0
+                        var normB = 0.0
+                        for (i in 0 until 16) {
+                            dotProduct += allclass.value!![i] * wifiresult!![i]
+                            normA += Math.pow(allclass.value!![i].toDouble(), 2.0)
+                            normB += Math.pow(wifiresult[i].toDouble(), 2.0)
+                        }
+                        val alpha = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB))
+
+                        var final_result: FloatArray = FloatArray(16)
+                        for (i in 0 until 16) {
+                            final_result[i] = alpha.toFloat() * allclass.value!![i] + (1 - alpha.toFloat()) * wifiresult!![i]
+//                            allclass.value!![i] = allclass.value!![i] / (1 + alpha)
+                        }
+
+
+                        fun <T : Comparable<T>> Iterable<T>.argmax(): Int? {
+                            return withIndex().maxByOrNull { it.value }?.index
+                        }
+//                        var maxIndex = allclass.value?.asList()?.argmax()
+                        var maxIndex = final_result.asList().argmax()
+                        for (i in 0 until 16) {
+                            allclass.value!![i] = final_result[i]
+                        }
+                        classResult.value = maxIndex?.plus(1).toString()
                     }
-                    var maxIndex = allclass.value?.asList()?.argmax()
-                    classResult.value = maxIndex?.plus(1).toString()
+                } else {
+                    if (inferButton.value) {
+//                    coroutine.launch(newSingleThreadContext("InferenceThread")) {
+                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+                        allclass.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath)
+                        fun <T : Comparable<T>> Iterable<T>.argmax(): Int? {
+                            return withIndex().maxByOrNull { it.value }?.index
+                        }
+                        var maxIndex = allclass.value?.asList()?.argmax()
+                        classResult.value = maxIndex?.plus(1).toString()
 //                    }
+                    }
                 }
+
                 startButton.value = false
             }
+
+            Button(
+                modifier = Modifier.width(80.dp),
+                onClick = {
+//                    scope.launch {
+//                        scaffoldState.snackbarHostState.showSnackbar(
+//                            "Image deleted",
+//                            duration = SnackbarDuration.Short
+//                        )
+//                    }
+                    val result = wifiInfer.inference()
+                    wifiResult.value = result.toString()
+//                Log.v("WifiInfer", result.toString()
+                },
+                enabled = !autoState.value
+            ) {
+                Text(text = "WifiT")
+            }
+
+            LaunchedEffect(wifiOn.value) {
+                coroutine2.launch {
+                    while (wifiOn.value) {
+                        val results = wifiInfer.wifialways()
+                        delay(1000L)
+                        var result = wifiInfer.inference2(results)
+
+                        fun <T : Comparable<T>> Iterable<T>.argmax(): Int? {
+                                return withIndex().maxByOrNull { it.value }?.index
+                        }
+                        var maxIndex = result?.asList()?.argmax()
+                        wifiResult.value = maxIndex?.plus(1).toString()
+                    }
+                }
+            }
+
+
 
             Button(
                 modifier = Modifier.width(80.dp),
@@ -353,6 +427,8 @@ fun HomePageView(applicationContext: Context) {
                 Text(text = "Delete")
             }
 
+
+
 //            Spacer(modifier = Modifier.padding(10.dp))
 
 
@@ -365,6 +441,10 @@ fun HomePageView(applicationContext: Context) {
                 }
 
 //                Text(text = "${allclass.value?.asList()}", fontSize = 10.sp, fontStyle = FontStyle.Italic)
+            }
+
+            wifiResult.value?.let {
+                Text(text = "Room Number(Wifi): $it", fontSize = 15.sp, fontStyle = FontStyle.Italic)
             }
 
             imageBitmap.value?.let {
