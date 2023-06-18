@@ -11,6 +11,7 @@ import java.io.File
 
 //https://github.com/StevenJokess/Pytorch-Kotlin-Demo/blob/master/app/src/main/java/com/say/pytorchkotlindemo/ImageClassificationOperation.kt
 class Transformer {
+//    private var module: Module? = Module.load(modelPath)
     private var module: Module? = null
     private val spectrogram = Spectrogram()
 //    private var loadingThread1: Thread? = null

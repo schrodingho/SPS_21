@@ -3,6 +3,7 @@ import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 
 import android.content.pm.PackageManager
 import android.net.wifi.ScanResult
@@ -65,10 +66,17 @@ class WifiInfer(context: Context, modelPath: String) {
         ) {
 
         }
+//        val intentFilter = IntentFilter()
+//        intentFilter.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)
+//        applicationContext.registerReceiver(wifiScanReceiver, intentFilter)
 
         wifiManager.startScan()
+//        if (success) {
         val results = wifiManager.scanResults
         return results
+//        } else {
+//            return null
+//        }
 
     }
 

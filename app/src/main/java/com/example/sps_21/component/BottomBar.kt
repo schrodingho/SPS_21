@@ -18,8 +18,8 @@ import com.example.sps_21.ui.theme.Red600
 fun BottomNavBar(navController: NavController) {
     var navItems = listOf(
         NavigationItem.Home,
-        NavigationItem.Data,
-        NavigationItem.Setting
+//        NavigationItem.Data,
+//        NavigationItem.Setting
     )
     BottomNavigation(backgroundColor = Red600, contentColor = Color.White) {
         val navBackStackEntry by navController.currentBackStackEntryAsState()

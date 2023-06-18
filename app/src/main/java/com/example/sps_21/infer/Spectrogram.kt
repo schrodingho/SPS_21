@@ -1,6 +1,7 @@
 package com.example.sps_21.infer
 import android.graphics.Bitmap
 import android.graphics.Color
+import androidx.core.graphics.ColorUtils
 import com.github.psambit9791.jdsp.filter.Butterworth
 import com.github.psambit9791.jdsp.transform.ShortTimeFourier
 import java.io.File
@@ -8,10 +9,6 @@ import java.io.FileOutputStream
 
 
 class Spectrogram {
-    private val FFT_SAMPLE_SIZE = 1000
-//    private val OVERLAP_FACTOR = 1
-//    private val audioFile: File? = null
-    private var data: Array<DoubleArray> = Array(2) { DoubleArray(FFT_SAMPLE_SIZE) }
     private val frameLength = 10
     private val fourierLength = 1000
         private val overlap = 1
@@ -19,11 +16,8 @@ class Spectrogram {
     private val order = 5
     private val butter = Butterworth(fs)
     private val cutoff: Double = 2000.0
-    private val nyq: Double = fs / 2
     private val normal_cutoff: Double = cutoff
     private val high_cutoff: Double = 10000.0
-
-
 
     fun trans(inputFile: File, outputFile: File?): FloatArray {
         var inputData = inputFile.readBytes()
@@ -64,37 +58,10 @@ class Spectrogram {
             toGrayScale(out, outputFile)
         }
         out = transpose_array(out)
-
 //        val outJson = Gson().toJson(out)
 //        outputFile.writeText(outJson)
         return flattenArray(out)
 
-
-
-//        var outMax = out[0][0];
-//        var outMin = out[0][0];
-
-//        for (i in 0 until out.size) {
-//            for (j in 0 until out[0].size) {
-//                if (out[i][j] > outMax) {
-//                    outMax = out[i][j]
-//                }
-//                if (out[i][j] < outMin) {
-//                    outMin = out[i][j]
-//                }
-//            }
-//        }
-//        val width = out.size
-//        val height = out[0].size
-//        val image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-//        for (i in 0 until width) {
-//            for (j in 0 until height) {
-//                val color = ((out[i][j] - outMin) / (outMax - outMin) * 255).toInt()
-////                val color = 255 - (out[i][j] * 255).toInt()
-//                image.setPixel(i, j, color)
-//            }
-//        }
-//        image.compress(Bitmap.CompressFormat.PNG, 100, FileOutputStream(outputFile))
     }
 
     fun flattenArray(input: Array<DoubleArray>): FloatArray {
@@ -150,32 +117,14 @@ class Spectrogram {
         val image = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         for (i in 0 until height) {
             for (j in 0 until width) {
-                val normalizedValue = ((input[i][j] - outMin) / (outMax - outMin) * 255).toInt()
+                val normalizedValue = (255 - ((input[i][j] - outMin) / (outMax - outMin) * 255)).toInt()
 //                val color = 255 - (out[i][j] * 255).toInt()
                 image.setPixel(j, i, Color.rgb(normalizedValue, normalizedValue, normalizedValue))
-
+//                ColorUtils.blendARGB(Color.rgb(normalizedValue, normalizedValue, normalizedValue), Color.BLACK, 0.5f)
 //                image.setPixel(i, j, color)
             }
         }
         image.compress(Bitmap.CompressFormat.PNG, 100, FileOutputStream(outputFile))
-
-
-//        val grayscalemap: Bitmap = Bitmap.createBitmap(input.size, input[0].size, Bitmap.Config.ARGB_8888)
-////        val d = Bitmap(input.size, c.Height)
-//
-//        for (i in 0 until input.size) {
-//            for (x in 0 until input[0].size) {
-//                val pixel = input[i][x].toInt()
-//                val oc: Color = c.GetPixel(i, x)
-//                val grayScale = (oc.R * 0.3 + oc.G * 0.59 + oc.B * 0.11)
-//                val nc: Color = Color.FromArgb(oc.A, grayScale, grayScale, grayScale)
-//                d.SetPixel(i, x, nc)
-//            }
-//        }
-
     }
-
-
-
 
 }

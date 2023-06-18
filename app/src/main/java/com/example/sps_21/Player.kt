@@ -33,17 +33,7 @@ class Player(applicationContext: Context) {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
-//        player = AudioTrack(
-//            AudioManager.STREAM_MUSIC,
-//            SAMPLE_RATE,
-//            PLAYER_CHANNEL,
-//            ENCODING,
-//            TRACK_BUFFER_SIZE,
-//            AudioTrack.MODE_STATIC
-//        )
         generateChirp()
-//        player?.write(gSnd, 0, gSnd.size)
     }
 
     fun generateChirp() {
