@@ -14,7 +14,7 @@ class Player(applicationContext: Context) {
     private val SAMPLE_RATE = 63333
     private val ENCODING = AudioFormat.ENCODING_PCM_16BIT
 
-    private val genFreq = 20000
+    private val genFreq = 15000
     private val PLAYER_CHANNEL = AudioFormat.CHANNEL_OUT_MONO
     private var TRACK_BUFFER_SIZE = 0
     private val PLAY_DURATION: Double = 0.005
@@ -33,17 +33,7 @@ class Player(applicationContext: Context) {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
-//        player = AudioTrack(
-//            AudioManager.STREAM_MUSIC,
-//            SAMPLE_RATE,
-//            PLAYER_CHANNEL,
-//            ENCODING,
-//            TRACK_BUFFER_SIZE,
-//            AudioTrack.MODE_STATIC
-//        )
         generateChirp()
-//        player?.write(gSnd, 0, gSnd.size)
     }
 
     fun generateChirp() {

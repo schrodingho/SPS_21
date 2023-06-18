@@ -28,13 +28,6 @@ class Recorder(applicationContext: Context) {
                 Manifest.permission.RECORD_AUDIO
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
             return
         }
         recorder =
@@ -42,11 +35,11 @@ class Recorder(applicationContext: Context) {
         outputStream = FileOutputStream(saveFile)
 
     }
-    fun createRecordThread() {
+    fun createRecordThread(Duration: Int = 5) {
         recordingThread = Thread(Runnable {
             recorder?.startRecording()
             isRecording = true
-            var recordDuration = 10;
+            var recordDuration = Duration
             val buffer = ShortArray(BUFFER_SIZE)
             while (isRecording) {
                 recordDuration -= 1
@@ -58,6 +51,7 @@ class Recorder(applicationContext: Context) {
             }
         })
     }
+
 
     fun startRecord() {
         recordingThread?.start()
