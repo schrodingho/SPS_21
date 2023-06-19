@@ -432,7 +432,7 @@ fun HomePageView(applicationContext: Context) {
                     Text(text = "Spect")
                 }
 
-//          Inference Part
+////          Inference Part
 //            Button(
 //                modifier = Modifier.width(80.dp),
 //                enabled = pcmState.value != null,
@@ -489,7 +489,7 @@ fun HomePageView(applicationContext: Context) {
             Spacer(modifier = Modifier.padding(2.dp))
 
             classResult.value?.let {
-                Text(text = "Cell $it", fontSize = 15.sp, fontStyle = FontStyle.Italic)
+                Text(text = "You are in Cell $it", fontSize = 15.sp)
                 top3Cell.value?.let {
                     showTopN(topIndices = top3Cell.value!!)
                 }
@@ -499,15 +499,14 @@ fun HomePageView(applicationContext: Context) {
 //            wifiResult.value?.let {
 //                Text(text = "Room Number(Wifi): $it", fontSize = 15.sp, fontStyle = FontStyle.Italic)
 //            }
-//
-//
 //            Text(text = "Wifi Ready: ${wifiReady.value}", fontSize = 15.sp, fontStyle = FontStyle.Italic)
+
 //            drawMaps()
 //
             Column(modifier = Modifier.padding(1.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
 
                 Image(painter = painterResource(id = R.drawable.layout_new), contentDescription = "layout", modifier = Modifier
-                    .size(200.dp)
+                    .size(250.dp)
                     .padding(1.dp)
 
                 )
@@ -534,12 +533,12 @@ fun HomePageView(applicationContext: Context) {
 @Composable
 fun showTopN(topIndices: List<Int>) {
     Row (Modifier.padding(1.dp)) {
-        Text(text = "Top 3: ")
+        Text(text = "Top 3: ", fontSize = 15.sp)
         for (i in 0 until topIndices.size) {
             if (i == topIndices.size - 1) {
-                Text(text = "C" + topIndices[i].plus(1).toString())
+                Text(text = "C" + topIndices[i].plus(1).toString(), fontSize = 15.sp)
             } else {
-                Text(text = "C" + topIndices[i].plus(1).toString()+", ")
+                Text(text = "C" + topIndices[i].plus(1).toString()+", ", fontSize = 15.sp)
             }
         }
     }
