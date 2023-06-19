@@ -388,7 +388,7 @@ fun HomePageView(applicationContext: Context) {
                         allclass.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath)
                     }
 //                delay(1000L)
-                    delay(6000L)
+                    delay(6400L)
                     val wifi_result_2 = wifiInfer.wifialways()
                     if (wifi_result_1 != wifi_result_2) {
                         Log.v("wifi", "wifi changed")
