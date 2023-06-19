@@ -205,7 +205,7 @@ fun HomePageView(applicationContext: Context) {
                     if (buttonCLicked.value) {
                         autoState.value = true
                         player.createPlayer()
-                        for (i in 0 until 100) {
+                        for (i in 0 until 10) {
                             coroutine.launch {
                                 currentTimestamp = System.currentTimeMillis()
                                 pcmName = "recording_${currentTimestamp}_${editRoom.value}.pcm"
@@ -222,6 +222,7 @@ fun HomePageView(applicationContext: Context) {
                         }
                     }
                     buttonCLicked.value = false
+
 //                    recorder.stopRecord()
                 }
                 Button(onClick = {
@@ -290,7 +291,7 @@ fun HomePageView(applicationContext: Context) {
                 )) {
                 Button(
                     modifier = Modifier
-                        .width(80.dp)
+                        .width(100.dp)
                         .padding(horizontal = 1.dp),
                     onClick = {
                         pcmName = "recording_temp.pcm"
@@ -301,44 +302,60 @@ fun HomePageView(applicationContext: Context) {
                     },
                     enabled = !autoState.value && !startButton_2.value
                 ) {
-                    Text(text = "Start1")
+                    Text(text = "Acoustic\n    Only")
                 }
                 LaunchedEffect(startButton.value) {
                     player.createPlayer()
+                    var final_results = FloatArray(16)
                     if (startButton.value) {
-                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-                        pcmState.value = cacheFilePath
-                        recorder.createRecorder(cacheFilePath)
-                        recorder.createRecordThread(10)
-                        recorder.startRecord()
-                        player.playManyTimes()
+                        for (i in 0 until 3) {
+                            val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+                            pcmState.value = cacheFilePath
+                            recorder.createRecorder(cacheFilePath)
+                            recorder.createRecordThread(10)
+                            recorder.startRecord()
+                            player.playManyTimes()
 
-                        delay(600L) // Delay for 1 second between each button click
-                        startButton.value = true // Trigger the button click again
-                        inferButton.value = true
-                    }
-                    if (inferButton.value) {
+                            delay(600L) // Delay for 1 second between each button click
+                            startButton.value = true // Trigger the button click again
+                            inferButton.value = true
+                            if (inferButton.value) {
 //                    coroutine.launch(newSingleThreadContext("InferenceThread")) {
-                        val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
-                        allclass.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath)
+                                val cacheFilePath = File(curContext.cacheDir, "recording_temp.pcm")
+                                allclass.value = inferModel.localInfer(cacheFilePath, moduleFileAbsoluteFilePath)
+                                for (i in 0 until 16) {
+                                    final_results[i] += allclass.value?.get(i)!!
+                                }
+
+//                                fun <T : Comparable<T>> Iterable<T>.argmax(): Int? {
+//                                    return withIndex().maxByOrNull { it.value }?.index
+//                                }
+//                                fun <T : Comparable<T>> Iterable<T>.argmax_n(n: Int): List<Int> {
+//                                    return withIndex().sortedByDescending { it.value }.take(n).map { it.index }
+//                                }
+//                                top3Cell.value = allclass.value?.asList()?.argmax_n(3)
+//                                var maxIndex = allclass.value?.asList()?.argmax()
+//                                classResult.value = maxIndex?.plus(1).toString()
+                            }
+                        }
                         fun <T : Comparable<T>> Iterable<T>.argmax(): Int? {
                             return withIndex().maxByOrNull { it.value }?.index
                         }
                         fun <T : Comparable<T>> Iterable<T>.argmax_n(n: Int): List<Int> {
                             return withIndex().sortedByDescending { it.value }.take(n).map { it.index }
                         }
-                        top3Cell.value = allclass.value?.asList()?.argmax_n(3)
-                        var maxIndex = allclass.value?.asList()?.argmax()
+                        top3Cell.value = final_results.asList().argmax_n(3)
+                        var maxIndex = final_results.asList().argmax()
                         classResult.value = maxIndex?.plus(1).toString()
-//                    }
                     }
+
                     startButton.value = false
                 }
 
 
                 Button(
                     modifier = Modifier
-                        .width(80.dp)
+                        .width(100.dp)
                         .padding(horizontal = 1.dp),
                     onClick = {
                         pcmName = "recording_temp.pcm"
@@ -349,7 +366,7 @@ fun HomePageView(applicationContext: Context) {
                     },
                     enabled = !autoState.value && !startButton.value
                 ) {
-                    Text(text = "Start2")
+                    Text(text = "Acoustic\n + Wifi")
                 }
             LaunchedEffect(startButton_2.value) {
                 player.createPlayer()
